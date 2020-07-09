@@ -1,22 +1,23 @@
 use crate::{
     requests::{GrantedTokensRequest, MintingSignatureRequest},
     responses::{GrantedTokensResponse, MintingSignatureResponse},
-    signer::Signer,
+    zksync::MintingApi,
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
+use std::sync::Arc;
 
 const DEFAULT_TOKENS_AMOUNT: u64 = 100;
 
 #[derive(Debug, Clone)]
 pub struct CommunityOracle {
-    signer: Signer,
+    minter: Arc<MintingApi>,
     tokens_amount: u64,
 }
 
 impl CommunityOracle {
     pub fn new() -> Self {
         CommunityOracle {
-            signer: Signer::new(),
+            minter: Arc::new(MintingApi::new()),
             tokens_amount: DEFAULT_TOKENS_AMOUNT,
         }
     }
@@ -36,10 +37,17 @@ impl CommunityOracle {
     }
 
     pub async fn sign_minting_tx(
-        _oracle: web::Data<Self>,
+        oracle: web::Data<Self>,
         request: web::Json<MintingSignatureRequest>,
     ) -> impl Responder {
-        let _request = request.into_inner();
+        let request = request.into_inner();
+
+        if !oracle
+            .minter
+            .is_minting_transaction_correct(&request.minting_tx, &request.user_address)
+        {
+            // TODO: do something
+        }
 
         let response = MintingSignatureResponse {
             signature: "NO_SIGNATURE_YET".into(),

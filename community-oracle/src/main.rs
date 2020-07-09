@@ -4,7 +4,7 @@ use actix_web::{App, HttpServer};
 mod community_oracle;
 mod requests;
 mod responses;
-mod signer;
+mod zksync;
 
 async fn run_server(bind_address: &str) -> std::io::Result<()> {
     let community_oracle = CommunityOracle::new();

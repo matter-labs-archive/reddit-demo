@@ -4,20 +4,36 @@ use crate::{
     zksync::MintingApi,
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 const DEFAULT_TOKENS_AMOUNT: u64 = 100;
 
 #[derive(Debug, Clone)]
+pub struct CommunityInfo {
+    token_id: u16,
+    token_symbol: String,
+}
+
+impl CommunityInfo {
+    pub fn new(token_id: u16, token_symbol: impl Into<String>) -> Self {
+        Self {
+            token_id,
+            token_symbol: token_symbol.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CommunityOracle {
-    known_communities: HashSet<String>,
+    /// Mapping "community name" => "token symbol"
+    known_communities: HashMap<String, CommunityInfo>,
     minter: Arc<MintingApi>,
     tokens_amount: u64,
 }
 
 impl CommunityOracle {
     pub fn new() -> Self {
-        let known_communities = vec!["TestCommunity".to_string()];
+        let known_communities = vec![("TestCommunity".to_string(), CommunityInfo::new(0, "ETH"))];
 
         CommunityOracle {
             known_communities: known_communities.into_iter().collect(),
@@ -32,14 +48,17 @@ impl CommunityOracle {
     ) -> impl Responder {
         let request = request.into_inner();
 
-        if !oracle.known_communities.contains(&request.community_name) {
-            let error = ErrorResponse::error("Invalid community");
-            return HttpResponse::BadRequest().json(error);
-        }
+        let community_info = match oracle.known_communities.get(&request.community_name) {
+            Some(info) => info,
+            None => {
+                let error = ErrorResponse::error("Invalid community");
+                return HttpResponse::BadRequest().json(error);
+            }
+        };
 
         let response = GrantedTokensResponse {
-            token_type: "ETH".into(),
-            token_amount: oracle.tokens_amount,
+            token: community_info.token_symbol.clone(),
+            amount: oracle.tokens_amount,
         };
 
         HttpResponse::Ok().json(response)
@@ -51,10 +70,13 @@ impl CommunityOracle {
     ) -> impl Responder {
         let request = request.into_inner();
 
-        if !oracle.known_communities.contains(&request.community_name) {
-            let error = ErrorResponse::error("Invalid community");
-            return HttpResponse::BadRequest().json(error);
-        }
+        let community_info = match oracle.known_communities.get(&request.community_name) {
+            Some(info) => info,
+            None => {
+                let error = ErrorResponse::error("Invalid community");
+                return HttpResponse::BadRequest().json(error);
+            }
+        };
 
         if !oracle
             .minter
@@ -64,8 +86,9 @@ impl CommunityOracle {
             return HttpResponse::BadRequest().json(error);
         }
 
-        // TODO: Harcoded symbol.
-        let signature = oracle.minter.sign_minting_tx(request.minting_tx, "ETH");
+        let signature = oracle
+            .minter
+            .sign_minting_tx(request.minting_tx, &community_info.token_symbol);
 
         let response = MintingSignatureResponse { signature };
 

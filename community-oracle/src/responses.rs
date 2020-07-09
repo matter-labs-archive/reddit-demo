@@ -16,8 +16,8 @@ impl ErrorResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrantedTokensResponse {
-    pub token_type: String,
-    pub token_amount: u64,
+    pub token: String,
+    pub amount: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,6 +1,6 @@
 use crate::{
     requests::{GrantedTokensRequest, MintingSignatureRequest},
-    responses::{GrantedTokensResponse, MintingSignatureResponse},
+    responses::{ErrorResponse, GrantedTokensResponse, MintingSignatureResponse},
     zksync::MintingApi,
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
@@ -46,7 +46,8 @@ impl CommunityOracle {
             .minter
             .is_minting_transaction_correct(&request.minting_tx, &request.user_address)
         {
-            // TODO: do something
+            let error = ErrorResponse::error("Incorrect minting tx");
+            return HttpResponse::BadRequest().json(error);
         }
 
         let response = MintingSignatureResponse {

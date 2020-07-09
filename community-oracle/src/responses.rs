@@ -5,6 +5,14 @@ pub struct ErrorResponse {
     pub error_description: String,
 }
 
+impl ErrorResponse {
+    pub fn error(message: &str) -> Self {
+        Self {
+            error_description: message.into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrantedTokensResponse {
     pub token_type: String,

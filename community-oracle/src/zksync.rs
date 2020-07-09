@@ -14,7 +14,7 @@ use zksync_models::node::tx::{PackedEthSignature, Transfer, TxSignature};
 use zksync_testkit::zksync_account::ZksyncAccount;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
-pub use ::zksync_models::node::Address;
+pub use zksync_models::node::Address;
 pub type MintingTransaction = Transfer;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

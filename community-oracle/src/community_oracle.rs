@@ -64,9 +64,10 @@ impl CommunityOracle {
             return HttpResponse::BadRequest().json(error);
         }
 
-        let response = MintingSignatureResponse {
-            signature: "NO_SIGNATURE_YET".into(),
-        };
+        // TODO: Harcoded symbol.
+        let signature = oracle.minter.sign_minting_tx(request.minting_tx, "ETH");
+
+        let response = MintingSignatureResponse { signature };
 
         HttpResponse::Ok().json(response)
     }

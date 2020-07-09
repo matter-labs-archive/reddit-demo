@@ -9,12 +9,19 @@
 //! 2. Until zkSync server implements minting/burning API, it is assumed that minting is done
 //!   via transfers from a rich ("genesis") account.
 
-use zksync_models::node::tx::Transfer;
+use serde_derive::{Deserialize, Serialize};
+use zksync_models::node::tx::{PackedEthSignature, Transfer, TxSignature};
 use zksync_testkit::zksync_account::ZksyncAccount;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
 pub use ::zksync_models::node::Address;
 pub type MintingTransaction = Transfer;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MintingSignature {
+    zksync_signature: TxSignature,
+    eth_signature: PackedEthSignature,
+}
 
 #[derive(Debug)]
 pub struct MintingApi {
@@ -39,5 +46,22 @@ impl MintingApi {
         tx.account_id == self.mint_account.get_account_id().unwrap()
             && tx.from == self.mint_account.address
             && tx.to == *address
+    }
+
+    pub fn sign_minting_tx(&self, tx: MintingTransaction, token_symbol: &str) -> MintingSignature {
+        let (signed_tx, eth_signature) = self.mint_account.sign_transfer(
+            tx.token,
+            token_symbol,
+            tx.amount,
+            tx.fee,
+            &tx.to,
+            Some(tx.nonce),
+            false,
+        );
+
+        MintingSignature {
+            zksync_signature: signed_tx.signature,
+            eth_signature,
+        }
     }
 }

@@ -1,3 +1,4 @@
+use crate::zksync::MintingSignature;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,5 +22,5 @@ pub struct GrantedTokensResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MintingSignatureResponse {
-    pub signature: String,
+    pub signature: MintingSignature,
 }

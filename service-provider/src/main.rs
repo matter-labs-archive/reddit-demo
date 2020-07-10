@@ -1,6 +1,7 @@
 use crate::service_provider::ServiceProvider;
 use actix_web::{App, HttpServer};
 
+mod database;
 mod requests;
 mod responses;
 mod service_provider;

@@ -1,5 +1,6 @@
 use crate::{
     database::DatabaseAccess,
+    oracle::CommunityOracle,
     requests::{DeclareCommunityRequest, SubscriptionCheckRequest},
     responses::{ErrorResponse, SubscriptionCheckResponse},
     zksync::ZksyncApp,
@@ -11,15 +12,18 @@ use std::sync::Arc;
 pub struct ServiceProvider<DB: DatabaseAccess> {
     db: Arc<DB>,
     zksync: Arc<ZksyncApp>,
+    oracle: Arc<CommunityOracle>,
 }
 
 impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
     pub fn new(db: DB) -> Self {
         let zksync = ZksyncApp::new("incorrect_addr", "incorrect_addr");
+        let oracle = CommunityOracle::new("incorrect_addr");
 
         Self {
             db: Arc::new(db),
             zksync: Arc::new(zksync),
+            oracle: Arc::new(oracle),
         }
     }
 

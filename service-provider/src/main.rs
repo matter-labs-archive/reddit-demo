@@ -1,4 +1,7 @@
-use crate::service_provider::ServiceProvider;
+use crate::{
+    database::{DatabaseAccess, MemoryDb},
+    service_provider::ServiceProvider,
+};
 use actix_web::{App, HttpServer};
 
 mod config;
@@ -9,7 +12,9 @@ mod service_provider;
 mod zksync;
 
 async fn run_server(bind_address: &str) -> std::io::Result<()> {
-    let service_provider = ServiceProvider::new();
+    let memory_db = MemoryDb::init(()).unwrap();
+
+    let service_provider = ServiceProvider::new(memory_db);
 
     HttpServer::new(move || {
         let provider = service_provider.clone();

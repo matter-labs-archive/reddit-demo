@@ -31,7 +31,9 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
 
         match provider.db.declare_community(request.community).await {
             Ok(()) => HttpResponse::Ok().json(()),
-            Err(err) => HttpResponse::BadRequest().json(ErrorResponse::error(&err.to_string())),
+            Err(err) => {
+                HttpResponse::InternalServerError().json(ErrorResponse::error(&err.to_string()))
+            }
         }
     }
 
@@ -61,7 +63,8 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
                 return HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed: false })
             }
             Err(error) => {
-                return HttpResponse::BadRequest().json(ErrorResponse::error(&error.to_string()))
+                return HttpResponse::InternalServerError()
+                    .json(ErrorResponse::error(&error.to_string()))
             }
         };
 
@@ -72,7 +75,8 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         {
             Ok(subscribed) => subscribed,
             Err(error) => {
-                return HttpResponse::BadRequest().json(ErrorResponse::error(&error.to_string()))
+                return HttpResponse::InternalServerError()
+                    .json(ErrorResponse::error(&error.to_string()))
             }
         };
 

@@ -1,4 +1,6 @@
-use crate::{database::DatabaseAccess, requests::DeclareCommunityRequest};
+use crate::{
+    database::DatabaseAccess, requests::DeclareCommunityRequest, responses::ErrorResponse,
+};
 use actix_web::{web, HttpResponse, Responder, Scope};
 use std::sync::Arc;
 
@@ -12,12 +14,16 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         Self { db: Arc::new(db) }
     }
 
-    // TODO: Register community
     pub async fn declare_community(
-        _provider: web::Data<Self>,
-        _request: web::Json<DeclareCommunityRequest>,
+        provider: web::Data<Self>,
+        request: web::Json<DeclareCommunityRequest>,
     ) -> impl Responder {
-        HttpResponse::Ok()
+        let request = request.into_inner();
+
+        match provider.db.declare_community(request.community).await {
+            Ok(()) => HttpResponse::Ok().json(()),
+            Err(err) => HttpResponse::BadRequest().json(ErrorResponse::error(&err.to_string())),
+        }
     }
 
     // TODO: Subscribe (manual)

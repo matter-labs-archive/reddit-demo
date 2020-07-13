@@ -1,4 +1,7 @@
-use super::{Community, DatabaseAccess};
+use crate::{
+    database::{Community, DatabaseAccess, Subscription},
+    zksync::Address,
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use std::{
@@ -9,6 +12,7 @@ use std::{
 #[derive(Debug, Clone)]
 pub struct MemoryDb {
     communities: Arc<RwLock<HashMap<String, Community>>>,
+    subscriptions: Arc<RwLock<HashMap<Address, Vec<Subscription>>>>,
 }
 
 #[async_trait]
@@ -18,6 +22,7 @@ impl DatabaseAccess for MemoryDb {
     fn init(_params: Self::DatabaseInitParams) -> Result<Self> {
         Ok(Self {
             communities: Default::default(),
+            subscriptions: Default::default(),
         })
     }
 
@@ -34,5 +39,37 @@ impl DatabaseAccess for MemoryDb {
         let communities = self.communities.read().unwrap();
 
         Ok(communities.get(community_name).cloned())
+    }
+
+    async fn add_subscription(&self, address: Address, subscription: Subscription) -> Result<()> {
+        let mut existing_subscriptions = self.subscriptions.write().unwrap();
+
+        // TODO: Handle duplicates
+        let user_subscriptions = existing_subscriptions
+            .entry(address)
+            .or_insert_with(|| Vec::new());
+
+        user_subscriptions.push(subscription);
+
+        Ok(())
+    }
+
+    async fn get_user_subscriptions(&self, address: Address) -> Result<Vec<Subscription>> {
+        let existing_subscriptions = self.subscriptions.read().unwrap();
+
+        let user_subscriptions = existing_subscriptions
+            .get(&address)
+            .cloned()
+            .unwrap_or_default();
+
+        Ok(user_subscriptions)
+    }
+
+    async fn is_user_subscribed(&self, address: Address, community: &str) -> Result<bool> {
+        let subscriptions = self.get_user_subscriptions(address).await?;
+
+        Ok(subscriptions
+            .iter()
+            .any(|sub| sub.service_name == community))
     }
 }

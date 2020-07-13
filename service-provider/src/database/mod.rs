@@ -1,7 +1,11 @@
+use crate::zksync::Address;
 use anyhow::Result;
 use async_trait::async_trait;
 
-pub use self::{memory_db::MemoryDb, types::Community};
+pub use self::{
+    memory_db::MemoryDb,
+    types::{Community, Subscription},
+};
 
 pub mod memory_db;
 pub mod types;
@@ -15,4 +19,10 @@ pub trait DatabaseAccess: Sized {
     async fn declare_community(&self, community: Community) -> Result<()>;
 
     async fn get_community(&self, community_name: &str) -> Result<Option<Community>>;
+
+    async fn add_subscription(&self, address: Address, subscription: Subscription) -> Result<()>;
+
+    async fn get_user_subscriptions(&self, address: Address) -> Result<Vec<Subscription>>;
+
+    async fn is_user_subscribed(&self, address: Address, community: &str) -> Result<bool>;
 }

@@ -32,6 +32,8 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
 
     // TODO: Unsubscribe (what should this method do? provide a "change pubkey" tx?) Alternative -- this is a fully client-side function, provider has nothing to do with it.
 
+    // TODO: Check amount of tokens granted to user
+
     // TODO: Request minting tx
 
     // TODO: Check subscription status

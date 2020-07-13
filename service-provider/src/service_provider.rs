@@ -1,5 +1,6 @@
 use crate::{
     database::DatabaseAccess, requests::DeclareCommunityRequest, responses::ErrorResponse,
+    zksync::ZksyncApp,
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
 use std::sync::Arc;
@@ -7,11 +8,17 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct ServiceProvider<DB: DatabaseAccess> {
     db: Arc<DB>,
+    zksync: Arc<ZksyncApp>,
 }
 
 impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
     pub fn new(db: DB) -> Self {
-        Self { db: Arc::new(db) }
+        let zksync = ZksyncApp::new("incorrect_addr", "incorrect_addr");
+
+        Self {
+            db: Arc::new(db),
+            zksync: Arc::new(zksync),
+        }
     }
 
     pub async fn declare_community(

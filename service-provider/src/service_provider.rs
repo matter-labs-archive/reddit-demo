@@ -1,5 +1,7 @@
 use crate::{
-    database::DatabaseAccess, requests::DeclareCommunityRequest, responses::ErrorResponse,
+    database::DatabaseAccess,
+    requests::{DeclareCommunityRequest, SubscriptionCheckRequest},
+    responses::{ErrorResponse, SubscriptionCheckResponse},
     zksync::ZksyncApp,
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
@@ -43,11 +45,44 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
 
     // TODO: Request minting tx
 
-    // TODO: Check subscription status
+    pub async fn is_user_subscribed(
+        provider: web::Data<Self>,
+        request: web::Json<SubscriptionCheckRequest>,
+    ) -> impl Responder {
+        let request = request.into_inner();
+
+        let sub = match provider
+            .db
+            .get_subscription(request.user, &request.community_name)
+            .await
+        {
+            Ok(Some(community)) => community,
+            Ok(None) => {
+                return HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed: false })
+            }
+            Err(error) => {
+                return HttpResponse::BadRequest().json(ErrorResponse::error(&error.to_string()))
+            }
+        };
+
+        let subscribed = match provider
+            .zksync
+            .is_user_subscribed(sub.subscription_wallet)
+            .await
+        {
+            Ok(subscribed) => subscribed,
+            Err(error) => {
+                return HttpResponse::BadRequest().json(ErrorResponse::error(&error.to_string()))
+            }
+        };
+
+        HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed })
+    }
 
     pub fn into_web_scope(self) -> Scope {
         web::scope("api/v0.1/")
             .data(self)
             .service(web::resource("/declare_community").to(Self::declare_community))
+            .service(web::resource("/is_user_subscribed").to(Self::is_user_subscribed))
     }
 }

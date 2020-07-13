@@ -12,3 +12,8 @@ impl ErrorResponse {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SubscriptionCheckResponse {
+    pub subscribed: bool,
+}

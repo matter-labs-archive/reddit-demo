@@ -65,11 +65,16 @@ impl DatabaseAccess for MemoryDb {
         Ok(user_subscriptions)
     }
 
-    async fn is_user_subscribed(&self, address: Address, community: &str) -> Result<bool> {
+    async fn get_subscription(
+        &self,
+        address: Address,
+        community: &str,
+    ) -> Result<Option<Subscription>> {
         let subscriptions = self.get_user_subscriptions(address).await?;
 
         Ok(subscriptions
             .iter()
-            .any(|sub| sub.service_name == community))
+            .find(|sub| sub.service_name == community)
+            .cloned())
     }
 }

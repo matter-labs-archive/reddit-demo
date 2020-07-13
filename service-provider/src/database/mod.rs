@@ -24,5 +24,9 @@ pub trait DatabaseAccess: Sized {
 
     async fn get_user_subscriptions(&self, address: Address) -> Result<Vec<Subscription>>;
 
-    async fn is_user_subscribed(&self, address: Address, community: &str) -> Result<bool>;
+    async fn get_subscription(
+        &self,
+        address: Address,
+        community: &str,
+    ) -> Result<Option<Subscription>>;
 }

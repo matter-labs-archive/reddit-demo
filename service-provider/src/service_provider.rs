@@ -1,9 +1,9 @@
 use crate::{
-    database::DatabaseAccess,
+    database::{DatabaseAccess, Subscription},
     oracle::CommunityOracle,
     requests::{
         DeclareCommunityRequest, GrantedTokensRequest, MintingSignatureRequest,
-        SubscriptionCheckRequest,
+        SetSubscriptionDataRequest, SubscriptionCheckRequest,
     },
     responses::SubscriptionCheckResponse,
     utils::response_from_error,
@@ -43,7 +43,24 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         Ok(HttpResponse::Ok().json(()))
     }
 
-    // TODO: Subscribe (manual)
+    pub async fn set_subscription_info(
+        provider: web::Data<Self>,
+        request: web::Json<SetSubscriptionDataRequest>,
+    ) -> Result<HttpResponse> {
+        let request = request.into_inner();
+
+        let subscription = Subscription {
+            service_name: request.community_name,
+            subscription_wallet: request.subscription_wallet,
+        };
+
+        provider
+            .db
+            .add_subscription(request.user, subscription)
+            .await?;
+
+        Ok(HttpResponse::Ok().json(()))
+    }
 
     // TODO: Subscribe (pre-sign txs)
 
@@ -133,6 +150,10 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             .service(
                 web::resource("/granted_tokens")
                     .to(|p, data| Self::failable(Self::tokens_for_user, p, data)),
+            )
+            .service(
+                web::resource("/set_subscription_info")
+                    .to(|p, data| Self::failable(Self::set_subscription_info, p, data)),
             )
     }
 }

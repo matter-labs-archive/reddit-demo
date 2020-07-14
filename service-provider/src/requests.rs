@@ -21,3 +21,11 @@ pub struct SubscriptionCheckRequest {
     pub community_name: String,
     pub auth: AuthData,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetSubscriptionDataRequest {
+    pub user: Address,
+    pub community_name: String,
+    pub subscription_wallet: Address,
+    pub auth: AuthData,
+}

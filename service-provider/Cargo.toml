@@ -12,6 +12,7 @@ anyhow = "1.0"
 async-trait = "0.1"
 chrono = "0.4"
 reqwest = "0.10"
+log = "0.4.8"
 
 serde = "1.0.90"
 serde_derive = "1.0.90"

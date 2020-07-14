@@ -1,6 +1,9 @@
-use crate::requests::{GrantedTokensRequest, MintingSignatureRequest};
+use crate::{
+    requests::{GrantedTokensRequest, MintingSignatureRequest},
+    responses::ErrorResponse,
+};
 use actix_web::HttpResponse;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 
 #[derive(Debug, Clone)]
 pub struct CommunityOracle {
@@ -17,12 +20,71 @@ impl CommunityOracle {
     }
 
     pub async fn tokens_for_user(&self, request: GrantedTokensRequest) -> HttpResponse {
-        // TODO: Stub
-        HttpResponse::Ok().json(())
+        let reqwest_response = self
+            .client
+            .post(&self.tokens_for_user_endpoint())
+            .json(&request)
+            .send()
+            .await;
+
+        Self::convert_response(reqwest_response).await
     }
 
-    pub async fn sign_minting_tx(&self, _request: MintingSignatureRequest) -> HttpResponse {
-        // TODO: Stub
-        HttpResponse::Ok().json(())
+    pub async fn sign_minting_tx(&self, request: MintingSignatureRequest) -> HttpResponse {
+        let reqwest_response = self
+            .client
+            .post(&self.sign_minting_tx_endpoint())
+            .json(&request)
+            .send()
+            .await;
+
+        Self::convert_response(reqwest_response).await
+    }
+
+    fn tokens_for_user_endpoint(&self) -> String {
+        format!("{}/api/v0.1/granted_tokens", &self.oracle_addr)
+    }
+
+    fn sign_minting_tx_endpoint(&self) -> String {
+        format!("{}/api/v0.1/sign_minting_tx", &self.oracle_addr)
+    }
+
+    /// Transforms the `reqwest` response type into `actix_web::HttpResponse`.
+    async fn convert_response(response: reqwest::Result<reqwest::Response>) -> HttpResponse {
+        let response = match response {
+            Ok(response) => response,
+            Err(error) => {
+                log::warn!("Request to the Community Oracle failed: {}", error);
+                return HttpResponse::InternalServerError()
+                    .json(ErrorResponse::error(&error.to_string()));
+            }
+        };
+
+        let mut response_builder = match response.status() {
+            StatusCode::OK => HttpResponse::Ok(),
+            StatusCode::BAD_REQUEST => HttpResponse::BadRequest(),
+            StatusCode::INTERNAL_SERVER_ERROR => HttpResponse::InternalServerError(),
+            _ => {
+                log::error!(
+                    "Community oracle returned unexpected response: {:?}",
+                    response
+                );
+                return HttpResponse::InternalServerError().json(ErrorResponse::error(
+                    "Unexpected response from the Community Oracle",
+                ));
+            }
+        };
+
+        let json_data: serde_json::Value = match response.json().await {
+            Ok(json) => json,
+            Err(error) => {
+                log::error!("Community oracle returned incorrect JSON: {}", error);
+                return HttpResponse::InternalServerError().json(ErrorResponse::error(
+                    "Unable to decode response from the Community Oracle",
+                ));
+            }
+        };
+
+        response_builder.json(json_data)
     }
 }

@@ -2,10 +2,10 @@ use crate::{
     database::{DatabaseAccess, Subscription},
     oracle::CommunityOracle,
     requests::{
-        DeclareCommunityRequest, GrantedTokensRequest, MintingSignatureRequest,
-        SetSubscriptionDataRequest, SubscriptionCheckRequest,
+        AddSubscriptionTxsRequest, DeclareCommunityRequest, GrantedTokensRequest,
+        MintingSignatureRequest, SetSubscriptionDataRequest, SubscriptionCheckRequest,
     },
-    responses::SubscriptionCheckResponse,
+    responses::{ErrorResponse, SubscriptionCheckResponse},
     utils::response_from_error,
     zksync::ZksyncApp,
 };
@@ -59,7 +59,29 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         Ok(HttpResponse::Ok().json(()))
     }
 
-    // TODO: Subscribe (pre-sign txs)
+    pub async fn add_subscription_txs(
+        provider: web::Data<Self>,
+        request: web::Json<AddSubscriptionTxsRequest>,
+    ) -> Result<HttpResponse> {
+        let request = request.into_inner();
+
+        for subscription_tx in &request.txs {
+            if let Err(_) = provider.zksync.check_subscription_tx(subscription_tx).await {
+                let response = HttpResponse::BadRequest()
+                    .json(ErrorResponse::error("Incorrect tx in request"));
+                return Ok(response);
+            }
+        }
+
+        provider
+            .db
+            .add_subscription_txs(request.user, &request.community_name, request.txs)
+            .await?;
+
+        let response = HttpResponse::Ok().json(());
+
+        Ok(response)
+    }
 
     // TODO: Unsubscribe (what should this method do? provide a "change pubkey" tx?) Alternative -- this is a fully client-side function, provider has nothing to do with it.
 
@@ -151,6 +173,10 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             .service(
                 web::resource("/set_subscription_info")
                     .to(|p, data| Self::failable(Self::set_subscription_info, p, data)),
+            )
+            .service(
+                web::resource("/add_subscription_txs")
+                    .to(|p, data| Self::failable(Self::add_subscription_txs, p, data)),
             )
     }
 }

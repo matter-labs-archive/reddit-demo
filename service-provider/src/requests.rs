@@ -1,4 +1,7 @@
-use crate::{database::Community, zksync::Address};
+use crate::{
+    database::Community,
+    zksync::{Address, SubscriptionTx},
+};
 use serde_derive::{Deserialize, Serialize};
 
 pub use community_oracle::requests::{GrantedTokensRequest, MintingSignatureRequest};
@@ -27,5 +30,13 @@ pub struct SetSubscriptionDataRequest {
     pub user: Address,
     pub community_name: String,
     pub subscription_wallet: Address,
+    pub auth: AuthData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddSubscriptionTxsRequest {
+    pub user: Address,
+    pub community_name: String,
+    pub txs: Vec<SubscriptionTx>,
     pub auth: AuthData,
 }

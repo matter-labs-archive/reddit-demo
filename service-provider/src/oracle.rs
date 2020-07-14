@@ -3,6 +3,7 @@ use crate::{
     responses::ErrorResponse,
 };
 use actix_web::HttpResponse;
+use anyhow::Result;
 use reqwest::{Client, StatusCode};
 
 #[derive(Debug, Clone)]
@@ -19,26 +20,26 @@ impl CommunityOracle {
         }
     }
 
-    pub async fn tokens_for_user(&self, request: GrantedTokensRequest) -> HttpResponse {
+    pub async fn tokens_for_user(&self, request: GrantedTokensRequest) -> Result<HttpResponse> {
         let reqwest_response = self
             .client
             .post(&self.tokens_for_user_endpoint())
             .json(&request)
             .send()
-            .await;
+            .await?;
 
-        Self::convert_response(reqwest_response).await
+        Ok(Self::convert_response(reqwest_response).await)
     }
 
-    pub async fn sign_minting_tx(&self, request: MintingSignatureRequest) -> HttpResponse {
+    pub async fn sign_minting_tx(&self, request: MintingSignatureRequest) -> Result<HttpResponse> {
         let reqwest_response = self
             .client
             .post(&self.sign_minting_tx_endpoint())
             .json(&request)
             .send()
-            .await;
+            .await?;
 
-        Self::convert_response(reqwest_response).await
+        Ok(Self::convert_response(reqwest_response).await)
     }
 
     fn tokens_for_user_endpoint(&self) -> String {
@@ -50,16 +51,7 @@ impl CommunityOracle {
     }
 
     /// Transforms the `reqwest` response type into `actix_web::HttpResponse`.
-    async fn convert_response(response: reqwest::Result<reqwest::Response>) -> HttpResponse {
-        let response = match response {
-            Ok(response) => response,
-            Err(error) => {
-                log::warn!("Request to the Community Oracle failed: {}", error);
-                return HttpResponse::InternalServerError()
-                    .json(ErrorResponse::error(&error.to_string()));
-            }
-        };
-
+    async fn convert_response(response: reqwest::Response) -> HttpResponse {
         let mut response_builder = match response.status() {
             StatusCode::OK => HttpResponse::Ok(),
             StatusCode::BAD_REQUEST => HttpResponse::BadRequest(),

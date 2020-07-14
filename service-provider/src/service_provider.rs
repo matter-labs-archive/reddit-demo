@@ -5,10 +5,12 @@ use crate::{
         DeclareCommunityRequest, GrantedTokensRequest, MintingSignatureRequest,
         SubscriptionCheckRequest,
     },
-    responses::{ErrorResponse, SubscriptionCheckResponse},
+    responses::SubscriptionCheckResponse,
+    utils::response_from_error,
     zksync::ZksyncApp,
 };
-use actix_web::{web, HttpResponse, Responder, Scope};
+use actix_web::{web, HttpResponse, Scope};
+use anyhow::Result;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -33,15 +35,12 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
     pub async fn declare_community(
         provider: web::Data<Self>,
         request: web::Json<DeclareCommunityRequest>,
-    ) -> impl Responder {
+    ) -> Result<HttpResponse> {
         let request = request.into_inner();
 
-        match provider.db.declare_community(request.community).await {
-            Ok(()) => HttpResponse::Ok().json(()),
-            Err(err) => {
-                HttpResponse::InternalServerError().json(ErrorResponse::error(&err.to_string()))
-            }
-        }
+        provider.db.declare_community(request.community).await?;
+
+        Ok(HttpResponse::Ok().json(()))
     }
 
     // TODO: Subscribe (manual)
@@ -53,63 +52,87 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
     pub async fn tokens_for_user(
         provider: web::Data<Self>,
         request: web::Json<GrantedTokensRequest>,
-    ) -> impl Responder {
+    ) -> Result<HttpResponse> {
         let request = request.into_inner();
 
-        provider.oracle.tokens_for_user(request).await
+        let response = provider.oracle.tokens_for_user(request).await?;
+
+        Ok(response)
     }
 
     pub async fn sign_minting_tx(
         provider: web::Data<Self>,
         request: web::Json<MintingSignatureRequest>,
-    ) -> impl Responder {
+    ) -> Result<HttpResponse> {
         let request = request.into_inner();
 
-        provider.oracle.sign_minting_tx(request).await
+        let response = provider.oracle.sign_minting_tx(request).await?;
+
+        Ok(response)
     }
 
     pub async fn is_user_subscribed(
         provider: web::Data<Self>,
         request: web::Json<SubscriptionCheckRequest>,
-    ) -> impl Responder {
+    ) -> Result<HttpResponse> {
         let request = request.into_inner();
 
         let sub = match provider
             .db
             .get_subscription(request.user, &request.community_name)
-            .await
+            .await?
         {
-            Ok(Some(community)) => community,
-            Ok(None) => {
-                return HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed: false })
-            }
-            Err(error) => {
-                return HttpResponse::InternalServerError()
-                    .json(ErrorResponse::error(&error.to_string()))
+            Some(community) => community,
+            None => {
+                return Ok(HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed: false }))
             }
         };
 
-        let subscribed = match provider
+        let subscribed = provider
             .zksync
             .is_user_subscribed(sub.subscription_wallet)
-            .await
-        {
-            Ok(subscribed) => subscribed,
-            Err(error) => {
-                return HttpResponse::InternalServerError()
-                    .json(ErrorResponse::error(&error.to_string()))
-            }
-        };
+            .await?;
 
-        HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed })
+        Ok(HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed }))
+    }
+
+    /// Wrapper around functions that return `anyhow::Result` which converts it to the `HttpResponse`.
+    /// This decorator allows handler functions to return `Result` and use `?` for convenient error propagation.
+    ///
+    /// Wrapper functions must be `async`.
+    pub async fn failable<F, Fut, R>(
+        handler: F,
+        provider: web::Data<Self>,
+        request: web::Json<R>,
+    ) -> HttpResponse
+    where
+        F: Fn(web::Data<Self>, web::Json<R>) -> Fut,
+        Fut: std::future::Future<Output = Result<HttpResponse>>,
+    {
+        match handler(provider, request).await {
+            Ok(response) => response,
+            Err(error) => response_from_error(error),
+        }
     }
 
     pub fn into_web_scope(self) -> Scope {
         web::scope("api/v0.1/")
             .data(self)
-            .service(web::resource("/declare_community").to(Self::declare_community))
-            .service(web::resource("/is_user_subscribed").to(Self::is_user_subscribed))
-            .service(web::resource("/get_minting_signature").to(Self::sign_minting_tx))
-            .service(web::resource("/granted_tokens").to(Self::tokens_for_user))
+            .service(
+                web::resource("/declare_community")
+                    .to(|p, data| Self::failable(Self::declare_community, p, data)),
+            )
+            .service(
+                web::resource("/is_user_subscribed")
+                    .to(|p, data| Self::failable(Self::is_user_subscribed, p, data)),
+            )
+            .service(
+                web::resource("/get_minting_signature")
+                    .to(|p, data| Self::failable(Self::sign_minting_tx, p, data)),
+            )
+            .service(
+                web::resource("/granted_tokens")
+                    .to(|p, data| Self::failable(Self::tokens_for_user, p, data)),
+            )
     }
 }

@@ -10,6 +10,7 @@ mod oracle;
 mod requests;
 mod responses;
 mod service_provider;
+mod utils;
 mod zksync;
 
 async fn run_server(bind_address: &str) -> std::io::Result<()> {

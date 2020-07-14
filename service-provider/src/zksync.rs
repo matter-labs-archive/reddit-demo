@@ -1,9 +1,12 @@
 use anyhow::Result;
 use chrono::{DateTime, Duration, Utc};
 use reqwest::Client;
+use zksync_models::node::tx::Transfer;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
 pub use zksync_models::node::Address;
+
+pub type SubscriptionTx = Transfer;
 
 #[derive(Debug)]
 pub struct ZksyncApp {

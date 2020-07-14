@@ -49,10 +49,7 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
     ) -> Result<HttpResponse> {
         let request = request.into_inner();
 
-        let subscription = Subscription {
-            service_name: request.community_name,
-            subscription_wallet: request.subscription_wallet,
-        };
+        let subscription = Subscription::new(request.community_name, request.subscription_wallet);
 
         provider
             .db

@@ -1,4 +1,4 @@
-use crate::zksync::Address;
+use crate::zksync::{Address, SubscriptionTx};
 use anyhow::Result;
 use async_trait::async_trait;
 
@@ -21,6 +21,13 @@ pub trait DatabaseAccess: Sized {
     async fn get_community(&self, community_name: &str) -> Result<Option<Community>>;
 
     async fn add_subscription(&self, address: Address, subscription: Subscription) -> Result<()>;
+
+    async fn add_subscription_txs(
+        &self,
+        address: Address,
+        community: &str,
+        txs: Vec<SubscriptionTx>,
+    ) -> Result<()>;
 
     async fn get_user_subscriptions(&self, address: Address) -> Result<Vec<Subscription>>;
 

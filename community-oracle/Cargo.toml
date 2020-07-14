@@ -1,5 +1,5 @@
 [package]
-name = "community-oracle"
+name = "community_oracle"
 version = "0.1.0"
 authors = ["Igor Aleksanov <popzxc@yandex.ru>"]
 edition = "2018"

@@ -1,7 +1,7 @@
 use crate::{
     database::DatabaseAccess,
     oracle::CommunityOracle,
-    requests::{DeclareCommunityRequest, SubscriptionCheckRequest},
+    requests::{DeclareCommunityRequest, MintingSignatureRequest, SubscriptionCheckRequest},
     responses::{ErrorResponse, SubscriptionCheckResponse},
     zksync::ZksyncApp,
 };
@@ -49,7 +49,14 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
 
     // TODO: Check amount of tokens granted to user
 
-    // TODO: Request minting tx
+    pub async fn sign_minting_tx(
+        provider: web::Data<Self>,
+        request: web::Json<MintingSignatureRequest>,
+    ) -> impl Responder {
+        let request = request.into_inner();
+
+        provider.oracle.sign_minting_tx(request).await
+    }
 
     pub async fn is_user_subscribed(
         provider: web::Data<Self>,
@@ -92,5 +99,6 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             .data(self)
             .service(web::resource("/declare_community").to(Self::declare_community))
             .service(web::resource("/is_user_subscribed").to(Self::is_user_subscribed))
+            .service(web::resource("/get_minting_signature").to(Self::sign_minting_tx))
     }
 }

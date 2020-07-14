@@ -1,10 +1,5 @@
-use crate::community_oracle::CommunityOracle;
 use actix_web::{App, HttpServer};
-
-mod community_oracle;
-mod requests;
-mod responses;
-mod zksync;
+use community_oracle::community_oracle::CommunityOracle;
 
 async fn run_server(bind_address: &str) -> std::io::Result<()> {
     let community_oracle = CommunityOracle::new();

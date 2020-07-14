@@ -1,6 +1,8 @@
 use crate::{database::Community, zksync::Address};
 use serde_derive::{Deserialize, Serialize};
 
+pub use community_oracle::requests::MintingSignatureRequest;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeclareCommunityRequest {
     #[serde(flatten)]

@@ -1,7 +1,10 @@
 use crate::{
     database::DatabaseAccess,
     oracle::CommunityOracle,
-    requests::{DeclareCommunityRequest, MintingSignatureRequest, SubscriptionCheckRequest},
+    requests::{
+        DeclareCommunityRequest, GrantedTokensRequest, MintingSignatureRequest,
+        SubscriptionCheckRequest,
+    },
     responses::{ErrorResponse, SubscriptionCheckResponse},
     zksync::ZksyncApp,
 };
@@ -47,7 +50,14 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
 
     // TODO: Unsubscribe (what should this method do? provide a "change pubkey" tx?) Alternative -- this is a fully client-side function, provider has nothing to do with it.
 
-    // TODO: Check amount of tokens granted to user
+    pub async fn tokens_for_user(
+        provider: web::Data<Self>,
+        request: web::Json<GrantedTokensRequest>,
+    ) -> impl Responder {
+        let request = request.into_inner();
+
+        provider.oracle.tokens_for_user(request).await
+    }
 
     pub async fn sign_minting_tx(
         provider: web::Data<Self>,
@@ -100,5 +110,6 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             .service(web::resource("/declare_community").to(Self::declare_community))
             .service(web::resource("/is_user_subscribed").to(Self::is_user_subscribed))
             .service(web::resource("/get_minting_signature").to(Self::sign_minting_tx))
+            .service(web::resource("/granted_tokens").to(Self::tokens_for_user))
     }
 }

@@ -1,7 +1,7 @@
 use crate::{database::Community, zksync::Address};
 use serde_derive::{Deserialize, Serialize};
 
-pub use community_oracle::requests::MintingSignatureRequest;
+pub use community_oracle::requests::{GrantedTokensRequest, MintingSignatureRequest};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeclareCommunityRequest {

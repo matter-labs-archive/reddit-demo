@@ -1,4 +1,4 @@
-use crate::requests::MintingSignatureRequest;
+use crate::requests::{GrantedTokensRequest, MintingSignatureRequest};
 use actix_web::HttpResponse;
 use reqwest::Client;
 
@@ -14,6 +14,11 @@ impl CommunityOracle {
             client: Client::new(),
             oracle_addr: oracle_addr.into(),
         }
+    }
+
+    pub async fn tokens_for_user(&self, request: GrantedTokensRequest) -> HttpResponse {
+        // TODO: Stub
+        HttpResponse::Ok().json(())
     }
 
     pub async fn sign_minting_tx(&self, _request: MintingSignatureRequest) -> HttpResponse {

@@ -5,6 +5,13 @@ This project contains the demo application for Reddit.
 Main features of it is to provide community tokens for users, register new communities
 and manage subscriptions to these communities.
 
+## Components
+
+This repository contains two related but yet independent projects:
+
+- [Community Oracle](community-oracle) - a bridge between zkSync network and the Reddit platform.
+- [Service Provider](service-provider) - an application capable of initiating and storing the users' subscriptions.
+
 ## Bootstrapping
 
 ```sh

@@ -40,3 +40,9 @@ pub struct AddSubscriptionTxsRequest {
     pub txs: Vec<SubscriptionTx>,
     pub auth: AuthData,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RelatedCommunitiesRequest {
+    pub user: Address,
+    pub auth: AuthData,
+}

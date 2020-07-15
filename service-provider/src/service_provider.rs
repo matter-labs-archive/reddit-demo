@@ -3,9 +3,10 @@ use crate::{
     oracle::CommunityOracle,
     requests::{
         AddSubscriptionTxsRequest, DeclareCommunityRequest, GrantedTokensRequest,
-        MintingSignatureRequest, SetSubscriptionDataRequest, SubscriptionCheckRequest,
+        MintingSignatureRequest, RelatedCommunitiesRequest, SetSubscriptionDataRequest,
+        SubscriptionCheckRequest,
     },
-    responses::{ErrorResponse, SubscriptionCheckResponse},
+    responses::{ErrorResponse, RelatedCommunitiesResponse, SubscriptionCheckResponse},
     utils::response_from_error,
     zksync::ZksyncApp,
 };
@@ -41,6 +42,20 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         provider.db.declare_community(request.community).await?;
 
         Ok(HttpResponse::Ok().json(()))
+    }
+
+    pub async fn related_communities(
+        _provider: web::Data<Self>,
+        request: web::Json<RelatedCommunitiesRequest>,
+    ) -> Result<HttpResponse> {
+        let _request = request.into_inner();
+
+        // TODO: Stub
+        let response = RelatedCommunitiesResponse {
+            communities: Vec::new(),
+        };
+
+        Ok(HttpResponse::Ok().json(response))
     }
 
     pub async fn set_subscription_info(
@@ -177,6 +192,10 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             .service(
                 web::resource("/add_subscription_txs")
                     .to(|p, data| Self::failable(Self::add_subscription_txs, p, data)),
+            )
+            .service(
+                web::resource("/related_communities")
+                    .to(|p, data| Self::failable(Self::related_communities, p, data)),
             )
     }
 }

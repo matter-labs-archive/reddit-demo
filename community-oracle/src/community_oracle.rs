@@ -80,7 +80,7 @@ impl CommunityOracle {
 
         if !oracle
             .minter
-            .is_minting_transaction_correct(&request.minting_tx, &request.user_address)
+            .is_minting_transaction_correct(&request.minting_tx, &request.user)
         {
             let error = ErrorResponse::error("Incorrect minting tx");
             return HttpResponse::BadRequest().json(error);

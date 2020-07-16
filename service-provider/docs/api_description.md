@@ -39,9 +39,6 @@ Endpoints involved in the process:
 
 This section provides a detailed description of inputs and outputs of the public API endpoints.
 
-**Note:** Several endpoints contain field `auth` which has the `string` type. This field is to be replaced with the
-actual authentication data, such as access token, but currently is not checked and can be empty (for the demo purposes).
-
 In case of any error on the Community Oracle side, the response will have a non-OK response HTTP code, and the response
 body will match the following structure:
 
@@ -63,7 +60,6 @@ communities, for subscription check see the `is_user_subscribed` endpoint.
 ```typescript
 {
     user: string, // Address of the user's main wallet.
-    auth: string // Authorization data. Currently can be empty string.
 }
 ```
 
@@ -87,7 +83,6 @@ Checks if user currently subscribed to the community (meaning that the subscript
 {
     user: string, // Address of the user's main wallet.
     community_name: string, // Name of the community to be checked.
-    auth: string // Authorization data. Currently can be empty string.
 }
 ```
 
@@ -110,7 +105,6 @@ Notifies the Community Oracle about the subscription wallet for community create
     user: string, // Address of the user's main wallet.
     community_name: string, // Name of the community to be checked.
     subscription_wallet: string, // Address of the subscription wallet.
-    auth: string // Authorization data. Currently can be empty string.
 }
 ```
 
@@ -134,7 +128,6 @@ This document will be updated with the required type definition once it's design
     user: string, // Address of the user's main wallet.
     community_name: string, // Name of the community to be checked.
     [index: number]: SubscriptionTx, // List of the pre-signed txs to pay for subscription.
-    auth: string // Authorization data. Currently can be empty string.
 }
 ```
 
@@ -156,7 +149,6 @@ Returns the type and amount of community tokens that user can mint.
 {
     user: string, // Address of the user's main wallet.
     community_name: string, // Name of the community to be checked.
-    auth: string // Authorization data. Currently can be empty string.
 }
 ```
 
@@ -186,7 +178,6 @@ This document will be updated with the required type definition once it's design
     user: string, // Address of the user's main wallet.
     community_name: string, // Name of the community to be checked.
     minting_tx: MintingTransaction, // Created, but not signed minting transaction.
-    auth: string // Authorization data. Currently can be empty string.
 }
 ```
 

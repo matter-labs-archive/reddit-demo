@@ -1,12 +1,17 @@
 use crate::{
-    requests::{GrantedTokensRequest, MintingSignatureRequest},
-    responses::{ErrorResponse, GrantedTokensResponse, MintingSignatureResponse},
+    requests::{GrantedTokensRequest, MintingSignatureRequest, RelatedCommunitiesRequest},
+    responses::{
+        ErrorResponse, GrantedTokensResponse, MintingSignatureResponse, RelatedCommunitiesResponse,
+    },
     zksync::MintingApi,
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
 use std::{collections::HashMap, sync::Arc};
 
 const DEFAULT_TOKENS_AMOUNT: u64 = 100;
+
+const TEST_COMMUNITY_NAME: &str = "TestCommunity";
+const TEST_COMMUNITY_TOKEN: &str = "ETH";
 
 #[derive(Debug, Clone)]
 pub struct CommunityInfo {
@@ -33,7 +38,10 @@ pub struct CommunityOracle {
 
 impl CommunityOracle {
     pub fn new() -> Self {
-        let known_communities = vec![("TestCommunity".to_string(), CommunityInfo::new(0, "ETH"))];
+        let known_communities = vec![(
+            TEST_COMMUNITY_NAME.to_string(),
+            CommunityInfo::new(0, TEST_COMMUNITY_TOKEN),
+        )];
 
         CommunityOracle {
             known_communities: known_communities.into_iter().collect(),
@@ -95,10 +103,22 @@ impl CommunityOracle {
         HttpResponse::Ok().json(response)
     }
 
+    pub async fn related_communities(
+        _oracle: web::Data<Self>,
+        _request: web::Json<RelatedCommunitiesRequest>,
+    ) -> impl Responder {
+        let response = RelatedCommunitiesResponse {
+            communities: vec![TEST_COMMUNITY_NAME.into()],
+        };
+
+        HttpResponse::Ok().json(response)
+    }
+
     pub fn into_web_scope(self) -> Scope {
         web::scope("api/v0.1/")
             .data(self)
             .service(web::resource("/granted_tokens").to(Self::tokens_for_user))
             .service(web::resource("/get_minting_signature").to(Self::sign_minting_tx))
+            .service(web::resource("/related_communities").to(Self::related_communities))
     }
 }

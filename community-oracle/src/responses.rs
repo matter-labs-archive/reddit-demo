@@ -24,3 +24,8 @@ pub struct GrantedTokensResponse {
 pub struct MintingSignatureResponse {
     pub signature: MintingSignature,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RelatedCommunitiesResponse {
+    pub communities: Vec<String>,
+}

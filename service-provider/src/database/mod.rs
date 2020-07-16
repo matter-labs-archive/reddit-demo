@@ -36,4 +36,6 @@ pub trait DatabaseAccess: Sized {
         address: Address,
         community: &str,
     ) -> Result<Option<Subscription>>;
+
+    // async fn get_expired_subscriptions(&self)
 }

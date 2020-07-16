@@ -1,5 +1,5 @@
 use crate::{
-    requests::{GrantedTokensRequest, MintingSignatureRequest},
+    requests::{GrantedTokensRequest, MintingSignatureRequest, RelatedCommunitiesRequest},
     responses::ErrorResponse,
 };
 use actix_web::HttpResponse;
@@ -42,12 +42,30 @@ impl CommunityOracle {
         Ok(Self::convert_response(reqwest_response).await)
     }
 
+    pub async fn related_communities(
+        &self,
+        request: RelatedCommunitiesRequest,
+    ) -> Result<HttpResponse> {
+        let reqwest_response = self
+            .client
+            .post(&self.related_communities_endpoint())
+            .json(&request)
+            .send()
+            .await?;
+
+        Ok(Self::convert_response(reqwest_response).await)
+    }
+
     fn tokens_for_user_endpoint(&self) -> String {
         format!("{}/api/v0.1/granted_tokens", &self.oracle_addr)
     }
 
     fn sign_minting_tx_endpoint(&self) -> String {
         format!("{}/api/v0.1/sign_minting_tx", &self.oracle_addr)
+    }
+
+    fn related_communities_endpoint(&self) -> String {
+        format!("{}/api/v0.1/related_communities", &self.oracle_addr)
     }
 
     /// Transforms the `reqwest` response type into `actix_web::HttpResponse`.

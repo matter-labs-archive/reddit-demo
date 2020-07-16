@@ -7,7 +7,7 @@ use crate::{
         MintingSignatureRequest, RelatedCommunitiesRequest, SetSubscriptionDataRequest,
         SubscriptionCheckRequest,
     },
-    responses::{ErrorResponse, RelatedCommunitiesResponse, SubscriptionCheckResponse},
+    responses::{ErrorResponse, SubscriptionCheckResponse},
     utils::response_from_error,
     zksync::ZksyncApp,
 };
@@ -49,17 +49,14 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
     }
 
     pub async fn related_communities(
-        _provider: web::Data<Self>,
+        provider: web::Data<Self>,
         request: web::Json<RelatedCommunitiesRequest>,
     ) -> Result<HttpResponse> {
-        let _request = request.into_inner();
+        let request = request.into_inner();
 
-        // TODO: Stub
-        let response = RelatedCommunitiesResponse {
-            communities: Vec::new(),
-        };
+        let response = provider.oracle.related_communities(request).await?;
 
-        Ok(HttpResponse::Ok().json(response))
+        Ok(response)
     }
 
     pub async fn set_subscription_info(

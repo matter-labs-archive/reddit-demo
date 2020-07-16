@@ -38,6 +38,11 @@ impl ZksyncApp {
         Ok(())
     }
 
+    pub async fn send_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
+        // TODO: Stub
+        Ok(())
+    }
+
     pub async fn last_subscription_tx(
         &self,
         _subscription_address: Address,

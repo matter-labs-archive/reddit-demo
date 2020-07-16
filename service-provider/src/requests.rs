@@ -4,7 +4,9 @@ use crate::{
 };
 use serde_derive::{Deserialize, Serialize};
 
-pub use community_oracle::requests::{GrantedTokensRequest, MintingSignatureRequest};
+pub use community_oracle::requests::{
+    GrantedTokensRequest, MintingSignatureRequest, RelatedCommunitiesRequest,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeclareCommunityRequest {
@@ -30,9 +32,4 @@ pub struct AddSubscriptionTxsRequest {
     pub user: Address,
     pub community_name: String,
     pub txs: Vec<SubscriptionTx>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RelatedCommunitiesRequest {
-    pub user: Address,
 }

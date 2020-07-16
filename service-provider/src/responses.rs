@@ -17,8 +17,3 @@ impl ErrorResponse {
 pub struct SubscriptionCheckResponse {
     pub subscribed: bool,
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RelatedCommunitiesResponse {
-    pub communities: Vec<String>,
-}

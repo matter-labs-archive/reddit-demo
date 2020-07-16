@@ -30,16 +30,11 @@ impl ZksyncApp {
             None => return Ok(false),
         };
 
-        let current_time = Utc::now();
-
-        // TODO imprecise calculation.
-        let subscribed = current_time <= last_subscription_tx_on + Duration::days(30);
-
-        Ok(subscribed)
+        Ok(self.check_subscription_status(last_subscription_tx_on))
     }
 
     pub async fn check_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
-        // TODO: Srub
+        // TODO: Stub
         Ok(())
     }
 
@@ -49,5 +44,13 @@ impl ZksyncApp {
     ) -> Result<Option<DateTime<Utc>>> {
         // TODO: Stub
         Ok(Some(Utc::now()))
+    }
+
+    /// Checks whether user subscription is expired. Currently the subscription duration is set to be
+    /// exactly 30 days, thus we simply check that the last tx on the subscription wallet is not older
+    /// than 30 days.
+    fn check_subscription_status(&self, last_tx_timestamp: DateTime<Utc>) -> bool {
+        let current_time = Utc::now();
+        current_time <= last_tx_timestamp + Duration::days(30)
     }
 }

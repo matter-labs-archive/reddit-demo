@@ -40,6 +40,8 @@ async fn run_sub_keeper(db: MemoryDb) -> anyhow::Result<()> {
 async fn main() -> std::io::Result<()> {
     const CONFIG_PATH: &str = "config.json";
 
+    env_logger::init();
+
     let config = AppConfig::load(&PathBuf::from(CONFIG_PATH));
     let memory_db = MemoryDb::init(()).unwrap();
 

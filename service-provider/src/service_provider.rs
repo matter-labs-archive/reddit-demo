@@ -1,4 +1,5 @@
 use crate::{
+    config::AppConfig,
     database::{DatabaseAccess, Subscription},
     oracle::CommunityOracle,
     requests::{
@@ -22,9 +23,12 @@ pub struct ServiceProvider<DB: DatabaseAccess> {
 }
 
 impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
-    pub fn new(db: DB) -> Self {
-        let zksync = ZksyncApp::new("incorrect_addr", "incorrect_addr");
-        let oracle = CommunityOracle::new("incorrect_addr");
+    pub fn new(db: DB, config: AppConfig) -> Self {
+        let zksync = ZksyncApp::new(
+            config.zksync_rest_api_address,
+            config.zksync_json_rpc_address,
+        );
+        let oracle = CommunityOracle::new(config.community_oracle_address);
 
         Self {
             db: Arc::new(db),

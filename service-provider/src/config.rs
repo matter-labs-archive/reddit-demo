@@ -1,5 +1,6 @@
 use serde_derive::Deserialize;
 use std::path::PathBuf;
+use std::env;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
@@ -12,15 +13,27 @@ pub struct AppConfig {
 
 impl AppConfig {
     /// Loads the spec from the file given its path.
-    pub fn load(filepath: &PathBuf) -> Self {
-        load_json(filepath)
+    pub fn load(_filepath: &PathBuf) -> Self {
+        Self::load_from_env()
+        // load_json(filepath)
     }
+
+    /// Loads config from env
+    fn load_from_env() -> Self {
+        Self {
+            app_bind_address: env::var("APP_BIND_ADDRESS").expect("APP_BIND_ADDRESS"),
+            zksync_rest_api_address: env::var("ZKSYNC_REST_API_ADDRESS").expect("ZKSYNC_REST_API_ADDRESS"),
+            zksync_json_rpc_address: env::var("ZKSYNC_JSON_RPC_ADDRESS").expect("ZKSYNC_JSON_RPC_ADDRESS"),
+            community_oracle_address: env::var("COMMUNITY_ORACLE_ADDRESS").expect("COMMUNITY_ORACLE_ADDRESS"),
+        }
+    }
+
 }
 
-fn load_json<T: serde::de::DeserializeOwned>(filepath: &PathBuf) -> T {
-    let buffer = std::fs::read_to_string(filepath).expect("Failed to read the test spec file");
-    serde_json::from_str(&buffer).expect(
-        "Failed to parse config file. Ensure that you provided \
-             the correct path for the type of test you're about to run",
-    )
-}
+// fn load_json<T: serde::de::DeserializeOwned>(filepath: &PathBuf) -> T {
+//     let buffer = std::fs::read_to_string(filepath).expect("Failed to read the test spec file");
+//     serde_json::from_str(&buffer).expect(
+//         "Failed to parse config file. Ensure that you provided \
+//              the correct path for the type of test you're about to run",
+//     )
+// }

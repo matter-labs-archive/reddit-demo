@@ -140,10 +140,7 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             }
         };
 
-        let subscribed = provider
-            .zksync
-            .is_user_subscribed(sub.subscription_wallet)
-            .await?;
+        let subscribed = provider.zksync.is_user_subscribed(sub).await?;
 
         Ok(HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed }))
     }

@@ -30,6 +30,12 @@ impl ZksyncApp {
             None => return Ok(false),
         };
 
+        // TODO: If subscription is outdated, but there are some not sent pre-signed txs yet, we must
+        // say that user is subscribed and immediately send the subscription tx to zkSync.
+        // User must be considered quasi-subscribed until tx is executed.
+        // This is required to ensure that there are no short periods of "not subscribed" state between
+        // subscription periods.
+
         Ok(self.check_subscription_status(last_subscription_tx_on))
     }
 

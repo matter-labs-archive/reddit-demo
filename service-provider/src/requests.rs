@@ -21,15 +21,9 @@ pub struct SubscriptionCheckRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SetSubscriptionDataRequest {
+pub struct SubscribeRequest {
     pub user: Address,
     pub community_name: String,
     pub subscription_wallet: Address,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AddSubscriptionTxsRequest {
-    pub user: Address,
-    pub community_name: String,
     pub txs: Vec<SubscriptionTx>,
 }

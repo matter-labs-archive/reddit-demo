@@ -14,6 +14,8 @@ use thiserror::Error;
 pub enum MemoryDbError {
     #[error("User is not subscribed")]
     UserIsNotSubscribed,
+    #[error("Subscription wallet differs from one used previously")]
+    DifferrentSubscriptionWallet,
 }
 
 #[derive(Debug, Clone)]
@@ -76,12 +78,24 @@ impl DatabaseAccess for MemoryDb {
     async fn add_subscription(&self, address: Address, subscription: Subscription) -> Result<()> {
         let mut existing_subscriptions = self.subscriptions.write().unwrap();
 
-        // TODO: Handle duplicates
         let user_subscriptions = existing_subscriptions
             .entry(address)
             .or_insert_with(|| Vec::new());
 
-        user_subscriptions.push(subscription);
+        // Check if we've already added this subscription.
+        if let Some(existing_sub) = user_subscriptions
+            .iter()
+            .find(|sub| sub.service_name == subscription.service_name)
+        {
+            // Algorithm for creating subscription wallets is deterministic, so we don't
+            // expect the address of the subscription wallet to change.
+            if existing_sub.subscription_wallet != subscription.subscription_wallet {
+                return Err(MemoryDbError::DifferrentSubscriptionWallet)?;
+            }
+        } else {
+            // We didn't find the subscription object in the DB, so create a new one.
+            user_subscriptions.push(subscription);
+        }
 
         Ok(())
     }

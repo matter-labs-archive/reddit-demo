@@ -3,9 +3,8 @@ use crate::{
     database::{DatabaseAccess, Subscription},
     oracle::CommunityOracle,
     requests::{
-        AddSubscriptionTxsRequest, DeclareCommunityRequest, GrantedTokensRequest,
-        MintingSignatureRequest, RelatedCommunitiesRequest, SetSubscriptionDataRequest,
-        SubscriptionCheckRequest,
+        DeclareCommunityRequest, GrantedTokensRequest, MintingSignatureRequest,
+        RelatedCommunitiesRequest, SubscribeRequest, SubscriptionCheckRequest,
     },
     responses::{ErrorResponse, SubscriptionCheckResponse},
     utils::response_from_error,
@@ -59,27 +58,18 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         Ok(response)
     }
 
-    pub async fn set_subscription_info(
+    pub async fn subscribe(
         provider: web::Data<Self>,
-        request: web::Json<SetSubscriptionDataRequest>,
+        request: web::Json<SubscribeRequest>,
     ) -> Result<HttpResponse> {
         let request = request.into_inner();
 
-        let subscription = Subscription::new(request.community_name, request.subscription_wallet);
+        let subscription = Subscription::new(&request.community_name, request.subscription_wallet);
 
         provider
             .db
             .add_subscription(request.user, subscription)
             .await?;
-
-        Ok(HttpResponse::Ok().json(()))
-    }
-
-    pub async fn add_subscription_txs(
-        provider: web::Data<Self>,
-        request: web::Json<AddSubscriptionTxsRequest>,
-    ) -> Result<HttpResponse> {
-        let request = request.into_inner();
 
         for subscription_tx in &request.txs {
             if let Err(_) = provider.zksync.check_subscription_tx(subscription_tx).await {
@@ -184,12 +174,7 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
                     .to(|p, data| Self::failable(Self::tokens_for_user, p, data)),
             )
             .service(
-                web::resource("/set_subscription_info")
-                    .to(|p, data| Self::failable(Self::set_subscription_info, p, data)),
-            )
-            .service(
-                web::resource("/add_subscription_txs")
-                    .to(|p, data| Self::failable(Self::add_subscription_txs, p, data)),
+                web::resource("/subscribe").to(|p, data| Self::failable(Self::subscribe, p, data)),
             )
             .service(
                 web::resource("/related_communities")

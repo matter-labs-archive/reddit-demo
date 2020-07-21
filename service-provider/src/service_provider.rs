@@ -126,13 +126,22 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         {
             Some(community) => community,
             None => {
-                return Ok(HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed: false }))
+                return Ok(HttpResponse::Ok().json(SubscriptionCheckResponse {
+                    subscribed: false,
+                    started_at: None,
+                    expires_at: None,
+                }))
             }
         };
 
-        let subscribed = provider.zksync.is_user_subscribed(sub).await?;
+        let subscribed = provider.zksync.is_user_subscribed(sub.clone()).await?;
+        let (start, end) = provider.zksync.get_subscription_period(sub).await?;
 
-        Ok(HttpResponse::Ok().json(SubscriptionCheckResponse { subscribed }))
+        Ok(HttpResponse::Ok().json(SubscriptionCheckResponse {
+            subscribed,
+            started_at: Some(start),
+            expires_at: Some(end),
+        }))
     }
 
     /// Wrapper around functions that return `anyhow::Result` which converts it to the `HttpResponse`.

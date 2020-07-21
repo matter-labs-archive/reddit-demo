@@ -88,7 +88,9 @@ Checks if user currently subscribed to the community (meaning that the subscript
 
 ```typescript
 {
-    subscribed: bool // `true` if user is currently subscribed to the community, and `false` otherwise.
+    subscribed: bool, // `true` if user is currently subscribed to the community, and `false` otherwise.
+    started_at?: string, // DateTime of the subscription period start.
+    expires_at?: string, // DateTime of the subscription period end.
 }
 ```
 

@@ -67,6 +67,18 @@ impl ZksyncApp {
         Ok(false)
     }
 
+    pub async fn get_subscription_period(
+        &self,
+        _subscription: Subscription,
+    ) -> Result<(DateTime<Utc>, DateTime<Utc>)> {
+        // TODO: Stub
+
+        let today = Utc::now();
+        let end = today + Duration::days(31);
+
+        Ok((today, end))
+    }
+
     pub async fn check_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
         // TODO: Stub
         Ok(())

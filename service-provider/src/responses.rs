@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,4 +17,6 @@ impl ErrorResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SubscriptionCheckResponse {
     pub subscribed: bool,
+    pub started_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<DateTime<Utc>>,
 }

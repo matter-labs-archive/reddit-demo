@@ -1,0 +1,17 @@
+FROM rust:1.45 as builder
+
+ADD . ./
+
+WORKDIR community-oracle
+RUN cargo build --release
+
+
+FROM rust:1.45
+EXPOSE 4040
+
+ARG APP=/usr/src/app
+
+COPY --from=builder /community-oracle/target/release/community_oracle ${APP}/community_oracle
+
+WORKDIR ${APP}
+CMD ["./community_oracle"]

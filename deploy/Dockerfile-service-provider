@@ -1,0 +1,17 @@
+FROM rust:1.45 as builder
+
+ADD . ./
+
+WORKDIR service-provider
+RUN cargo build --release
+
+
+FROM rust:1.45
+EXPOSE 8080
+
+ARG APP=/usr/src/app
+
+COPY --from=builder /service-provider/target/release/service_provider ${APP}/service_provider
+
+WORKDIR ${APP}
+CMD ["./service_provider"]

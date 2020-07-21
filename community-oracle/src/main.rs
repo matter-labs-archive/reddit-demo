@@ -16,7 +16,7 @@ async fn run_server(bind_address: &str) -> std::io::Result<()> {
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    const BIND_ADDRES: &str = "127.0.0.1:4040";
+    const BIND_ADDRES: &str = "0.0.0.0:4040";
 
     run_server(BIND_ADDRES).await
 }

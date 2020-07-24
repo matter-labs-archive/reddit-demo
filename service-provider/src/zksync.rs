@@ -9,6 +9,27 @@ pub use zksync_models::node::Address;
 
 pub type SubscriptionTx = Transfer;
 
+/// Extension trait for `SubscriptionTx` type adding convenient getters for the required functionality.
+pub trait SubscriptionTxExt {
+    /// Returns the `DateTime` object showing when this transaction can be executed.
+    fn active_on(&self) -> DateTime<Utc>;
+
+    /// Returns the `DateTime` object showing when this transaction will not be valid anymore.
+    fn active_until(&self) -> DateTime<Utc>;
+}
+
+impl SubscriptionTxExt for SubscriptionTx {
+    fn active_on(&self) -> DateTime<Utc> {
+        // TODO: Stub
+        Utc::now() - Duration::hours(1)
+    }
+
+    fn active_until(&self) -> DateTime<Utc> {
+        // TODO: Stub
+        Utc::now() + Duration::hours(11)
+    }
+}
+
 #[derive(Debug)]
 pub struct ZksyncApp {
     client: Client,
@@ -81,11 +102,13 @@ impl ZksyncApp {
 
     pub async fn check_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
         // TODO: Stub
+
         Ok(())
     }
 
     pub async fn send_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
         // TODO: Stub
+
         Ok(())
     }
 
@@ -101,9 +124,11 @@ impl ZksyncApp {
     }
 
     /// Checks whether provided tx can be sent as the next subscription tx.
-    fn is_next_sub_tx(&self, _tx: &SubscriptionTx) -> bool {
-        // TODO: Stub
-        true
+    fn is_next_sub_tx(&self, subscription_tx: &SubscriptionTx) -> bool {
+        let current_time = Utc::now();
+
+        subscription_tx.active_on() <= current_time
+            && subscription_tx.active_until() >= current_time
     }
 
     /// Checks whether user subscription is expired. Currently the subscription duration is set to be

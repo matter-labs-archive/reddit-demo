@@ -14,4 +14,4 @@ ARG APP=/usr/src/app
 COPY --from=builder /service-provider/target/release/service_provider ${APP}/service_provider
 
 WORKDIR ${APP}
-CMD ["./service_provider"]
+CMD ["./service_provider --env_config"]

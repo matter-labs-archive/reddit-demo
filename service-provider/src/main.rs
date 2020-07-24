@@ -5,6 +5,7 @@ use crate::{
 };
 use actix_web::{App, HttpServer};
 use std::path::PathBuf;
+use structopt::StructOpt;
 
 mod config;
 mod database;
@@ -28,13 +29,23 @@ async fn run_server(db: MemoryDb, config: AppConfig) -> std::io::Result<()> {
     .await
 }
 
+#[derive(StructOpt)]
+#[structopt(name = "service_provider", about = "A Reddit Service Provider.")]
+pub struct Opt {
+    /// Load config from env (rather than a config file)
+    #[structopt(short, long)]
+    pub env_config: bool,
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     const CONFIG_PATH: &str = "config.json";
 
+    let opt = Opt::from_args();
+
     env_logger::init();
 
-    let config = AppConfig::load(&PathBuf::from(CONFIG_PATH));
+    let config = AppConfig::load(opt.env_config, &PathBuf::from(CONFIG_PATH));
     let memory_db = MemoryDb::init(()).unwrap();
 
     run_server(memory_db, config).await

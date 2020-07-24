@@ -1,4 +1,5 @@
 use crate::{
+    config::AppConfig,
     requests::{GrantedTokensRequest, MintingSignatureRequest, RelatedCommunitiesRequest},
     responses::{
         ErrorResponse, GrantedTokensResponse, MintingSignatureResponse, RelatedCommunitiesResponse,
@@ -37,7 +38,7 @@ pub struct CommunityOracle {
 }
 
 impl CommunityOracle {
-    pub fn new() -> Self {
+    pub fn new(config: AppConfig) -> Self {
         let known_communities = vec![(
             TEST_COMMUNITY_NAME.to_string(),
             CommunityInfo::new(0, TEST_COMMUNITY_TOKEN),
@@ -45,7 +46,7 @@ impl CommunityOracle {
 
         CommunityOracle {
             known_communities: known_communities.into_iter().collect(),
-            minter: Arc::new(MintingApi::new()),
+            minter: Arc::new(MintingApi::new(config)),
             tokens_amount: DEFAULT_TOKENS_AMOUNT,
         }
     }

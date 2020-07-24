@@ -29,9 +29,9 @@ async fn run_server(db: MemoryDb, config: AppConfig) -> std::io::Result<()> {
     .await
 }
 
-#[derive(StructOpt)]
+#[derive(Debug, StructOpt)]
 #[structopt(name = "service_provider", about = "A Reddit Service Provider.")]
-pub struct Opt {
+pub struct CliArgs {
     /// Load config from env (rather than a config file)
     #[structopt(short, long)]
     pub env_config: bool,
@@ -41,7 +41,7 @@ pub struct Opt {
 async fn main() -> std::io::Result<()> {
     const CONFIG_PATH: &str = "config.json";
 
-    let opt = Opt::from_args();
+    let opt = CliArgs::from_args();
 
     env_logger::init();
 

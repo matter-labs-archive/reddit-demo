@@ -1,5 +1,5 @@
 use crate::{database::Subscription, zksync::rpc_client::RpcClient};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -10,6 +10,10 @@ mod rpc_client;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
 pub use zksync_models::node::Address;
+
+// TODO: This should not be a hard-coded constant.
+/// Cost of the subscription.
+pub const SUBSCRIPTION_COST: u64 = 100;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionTx {
@@ -46,14 +50,20 @@ pub struct ZksyncApp {
     client: Client,
     rest_api_addr: String,
     rpc_client: RpcClient,
+    burn_account_address: Address,
 }
 
 impl ZksyncApp {
-    pub fn new(rest_api_addr: impl Into<String>, json_rpc_addr: impl Into<String>) -> Self {
+    pub fn new(
+        rest_api_addr: impl Into<String>,
+        json_rpc_addr: impl Into<String>,
+        burn_account_address: Address,
+    ) -> Self {
         Self {
             client: Client::new(),
             rest_api_addr: rest_api_addr.into(),
             rpc_client: RpcClient::new(json_rpc_addr),
+            burn_account_address,
         }
     }
 
@@ -88,6 +98,7 @@ impl ZksyncApp {
             // TODO: This is a workaround which assumes that this endpoint is invoked somewhat consistently.
             // It may work incorrect if invoked rarely, thus it has to be replaced with a routine which schedules
             // sending txs right after the subscription has expired.
+            // We may want to run a parallel thread which will invoke this method periodically for every subscription.
             self.send_subscription_tx(new_sub_tx).await?;
 
             // TODO: Remove sent tx from the database.
@@ -101,18 +112,72 @@ impl ZksyncApp {
 
     pub async fn get_subscription_period(
         &self,
-        _subscription: Subscription,
-    ) -> Result<(DateTime<Utc>, DateTime<Utc>)> {
-        // TODO: Stub
+        subscription: Subscription,
+    ) -> Result<(Option<DateTime<Utc>>, Option<DateTime<Utc>>)> {
+        // Subscription starts at the time of execution of the very first subscription tx.
+        // Here we assume that txs are executed at ~same time as the became valid.
+        let started_at = subscription
+            .pre_signed_txs
+            .iter()
+            .map(SubscriptionTxExt::valid_from)
+            .min();
 
-        let today = Utc::now();
-        let end = today + Duration::days(31);
+        // To find the end of subscription period, we take the last subscription tx and
+        // add the length of the subscription period (31 days).
+        let expires_at = subscription
+            .pre_signed_txs
+            .iter()
+            .map(SubscriptionTxExt::valid_from)
+            .max()
+            .map(|date| date + Duration::days(31));
 
-        Ok((today, end))
+        Ok((started_at, expires_at))
     }
 
-    pub async fn check_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
-        // TODO: Stub
+    pub async fn check_subscription_tx(
+        &self,
+        subscription: &Subscription,
+        subscription_tx: &SubscriptionTx,
+    ) -> Result<()> {
+        if subscription_tx.transfer_to_sub.to != subscription.subscription_wallet {
+            return Err(anyhow!(
+                "`TransferFrom` recipient doesn't match known subscription wallet (expected {}, got {})",
+                subscription.subscription_wallet,
+                subscription_tx.transfer_to_sub.to
+            ));
+        }
+
+        if subscription_tx.burn_tx.from != subscription.subscription_wallet {
+            return Err(anyhow!(
+                "Burn transaction `from` initiator incorrect (expected {}, got {})",
+                subscription.subscription_wallet,
+                subscription_tx.burn_tx.from
+            ));
+        }
+
+        if subscription_tx.burn_tx.to != self.burn_account_address {
+            return Err(anyhow!(
+                "Burn transaction `to` recipient incorrect (expected {}, got {})",
+                self.burn_account_address,
+                subscription_tx.burn_tx.to
+            ));
+        }
+
+        if subscription_tx.transfer_to_sub.amount != SUBSCRIPTION_COST.into() {
+            return Err(anyhow!(
+                "`TransferFrom` amount is not equal to the subscription cost (expected {}, got {})",
+                SUBSCRIPTION_COST,
+                subscription_tx.transfer_to_sub.amount
+            ));
+        }
+
+        if subscription_tx.burn_tx.amount != SUBSCRIPTION_COST.into() {
+            return Err(anyhow!(
+                "Burn tx amount is not equal to the subscription cost (expected {}, got {})",
+                SUBSCRIPTION_COST,
+                subscription_tx.burn_tx.amount
+            ));
+        }
 
         Ok(())
     }

@@ -26,6 +26,7 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         let zksync = ZksyncApp::new(
             config.zksync_rest_api_address,
             config.zksync_json_rpc_address,
+            config.burn_account_address,
         );
         let oracle = CommunityOracle::new(config.community_oracle_address);
 
@@ -66,18 +67,22 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
 
         let subscription = Subscription::new(&request.community_name, request.subscription_wallet);
 
-        provider
-            .db
-            .add_subscription(request.user, subscription)
-            .await?;
-
         for subscription_tx in &request.txs {
-            if let Err(_) = provider.zksync.check_subscription_tx(subscription_tx).await {
+            if let Err(_) = provider
+                .zksync
+                .check_subscription_tx(&subscription, subscription_tx)
+                .await
+            {
                 let response = HttpResponse::BadRequest()
                     .json(ErrorResponse::error("Incorrect tx in request"));
                 return Ok(response);
             }
         }
+
+        provider
+            .db
+            .add_subscription(request.user, subscription)
+            .await?;
 
         provider
             .db
@@ -135,12 +140,12 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         };
 
         let subscribed = provider.zksync.is_user_subscribed(sub.clone()).await?;
-        let (start, end) = provider.zksync.get_subscription_period(sub).await?;
+        let (started_at, expires_at) = provider.zksync.get_subscription_period(sub).await?;
 
         Ok(HttpResponse::Ok().json(SubscriptionCheckResponse {
             subscribed,
-            started_at: Some(start),
-            expires_at: Some(end),
+            started_at,
+            expires_at,
         }))
     }
 

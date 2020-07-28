@@ -1,3 +1,4 @@
+use crate::zksync::Address;
 use serde_derive::Deserialize;
 use std::env;
 use std::path::PathBuf;
@@ -8,6 +9,7 @@ pub struct AppConfig {
     pub zksync_rest_api_address: String,
     pub zksync_json_rpc_address: String,
     pub community_oracle_address: String,
+    pub burn_account_address: Address,
     // TODO: Database params
 }
 
@@ -31,6 +33,10 @@ impl AppConfig {
                 .expect("ZKSYNC_JSON_RPC_ADDRESS"),
             community_oracle_address: env::var("COMMUNITY_ORACLE_ADDRESS")
                 .expect("COMMUNITY_ORACLE_ADDRESS"),
+            burn_account_address: env::var("BURN_ACCOUNT_ADDRESS")
+                .expect("BURN_ACCOUNT_ADDRESS")
+                .parse()
+                .expect("Can't decode burn account address"),
         }
     }
 }

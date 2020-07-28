@@ -9,7 +9,7 @@ use crate::{
 use actix_web::{web, HttpResponse, Responder, Scope};
 use std::{collections::HashMap, sync::Arc};
 
-const DEFAULT_TOKENS_AMOUNT: u64 = 100;
+pub const DEFAULT_TOKENS_AMOUNT: u64 = 100;
 
 const TEST_COMMUNITY_NAME: &str = "TestCommunity";
 const TEST_COMMUNITY_TOKEN: &str = "ETH";
@@ -79,8 +79,10 @@ impl CommunityOracle {
     ) -> impl Responder {
         let request = request.into_inner();
 
-        let community_info = match oracle.known_communities.get(&request.community_name) {
-            Some(info) => info,
+        match oracle.known_communities.get(&request.community_name) {
+            Some(_) => {
+                // OK, community is known.
+            }
             None => {
                 let error = ErrorResponse::error("Invalid community");
                 return HttpResponse::BadRequest().json(error);
@@ -95,9 +97,7 @@ impl CommunityOracle {
             return HttpResponse::BadRequest().json(error);
         }
 
-        let signature = oracle
-            .minter
-            .sign_minting_tx(request.minting_tx, &community_info.token_symbol);
+        let signature = oracle.minter.sign_minting_tx(request.minting_tx);
 
         let response = MintingSignatureResponse { signature };
 

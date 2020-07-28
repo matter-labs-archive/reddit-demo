@@ -11,17 +11,16 @@
 
 use crate::config::AppConfig;
 use serde_derive::{Deserialize, Serialize};
-use zksync_models::node::tx::{PackedEthSignature, Transfer, TxSignature};
+use zksync_models::node::tx::{PackedEthSignature, TransferFrom, TxSignature};
 use zksync_testkit::zksync_account::ZksyncAccount;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
 pub use zksync_models::node::{Address, PrivateKey, H256};
-pub type MintingTransaction = Transfer;
+pub type MintingTransaction = TransferFrom;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MintingSignature {
     zksync_signature: TxSignature,
-    eth_signature: PackedEthSignature,
 }
 
 #[derive(Debug)]
@@ -56,25 +55,17 @@ impl MintingApi {
         tx: &MintingTransaction,
         address: &Address,
     ) -> bool {
-        tx.account_id == self.mint_account.get_account_id().unwrap()
-            && tx.from == self.mint_account.address
+        tx.from == self.mint_account.address
             && tx.to == *address
+            && tx.amount == crate::community_oracle::DEFAULT_TOKENS_AMOUNT.into()
     }
 
-    pub fn sign_minting_tx(&self, tx: MintingTransaction, token_symbol: &str) -> MintingSignature {
-        let (signed_tx, eth_signature) = self.mint_account.sign_transfer(
-            tx.token,
-            token_symbol,
-            tx.amount,
-            tx.fee,
-            &tx.to,
-            Some(tx.nonce),
-            false,
-        );
+    pub fn sign_minting_tx(&self, tx: MintingTransaction) -> MintingSignature {
+        let from_signature =
+            TxSignature::sign_musig(&self.mint_account.private_key, &tx.get_bytes());
 
         MintingSignature {
-            zksync_signature: signed_tx.signature,
-            eth_signature,
+            zksync_signature: from_signature,
         }
     }
 }

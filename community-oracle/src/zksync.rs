@@ -11,7 +11,7 @@
 
 use crate::config::AppConfig;
 use serde_derive::{Deserialize, Serialize};
-use zksync_models::node::tx::{PackedEthSignature, TransferFrom, TxSignature};
+use zksync_models::node::tx::{TransferFrom, TxSignature};
 use zksync_testkit::zksync_account::ZksyncAccount;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.

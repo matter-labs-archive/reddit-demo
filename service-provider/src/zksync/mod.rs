@@ -1,32 +1,43 @@
-use crate::database::Subscription;
+use crate::{database::Subscription, zksync::rpc_client::RpcClient};
 use anyhow::Result;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use reqwest::Client;
-use zksync_models::node::tx::Transfer;
+use serde::{Deserialize, Serialize};
+use zksync_models::node::tx::{FranklinTx, PackedEthSignature, Transfer, TransferFrom};
+
+mod rest_client;
+mod rpc_client;
 
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
 pub use zksync_models::node::Address;
 
-pub type SubscriptionTx = Transfer;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubscriptionTx {
+    transfer_to_sub: TransferFrom,
+    burn_tx: Transfer,
+    burn_tx_eth_signature: PackedEthSignature,
+}
 
 /// Extension trait for `SubscriptionTx` type adding convenient getters for the required functionality.
 pub trait SubscriptionTxExt {
     /// Returns the `DateTime` object showing when this transaction can be executed.
-    fn active_on(&self) -> DateTime<Utc>;
+    fn valid_from(&self) -> DateTime<Utc>;
 
     /// Returns the `DateTime` object showing when this transaction will not be valid anymore.
-    fn active_until(&self) -> DateTime<Utc>;
+    fn valid_until(&self) -> DateTime<Utc>;
 }
 
 impl SubscriptionTxExt for SubscriptionTx {
-    fn active_on(&self) -> DateTime<Utc> {
-        // TODO: Stub
-        Utc::now() - Duration::hours(1)
+    fn valid_from(&self) -> DateTime<Utc> {
+        let time = NaiveDateTime::from_timestamp(self.transfer_to_sub.valid_from as i64, 0);
+
+        DateTime::from_utc(time, Utc)
     }
 
-    fn active_until(&self) -> DateTime<Utc> {
-        // TODO: Stub
-        Utc::now() + Duration::hours(11)
+    fn valid_until(&self) -> DateTime<Utc> {
+        let time = NaiveDateTime::from_timestamp(self.transfer_to_sub.valid_until as i64, 0);
+
+        DateTime::from_utc(time, Utc)
     }
 }
 
@@ -34,7 +45,7 @@ impl SubscriptionTxExt for SubscriptionTx {
 pub struct ZksyncApp {
     client: Client,
     rest_api_addr: String,
-    json_rpc_addr: String,
+    rpc_client: RpcClient,
 }
 
 impl ZksyncApp {
@@ -42,7 +53,7 @@ impl ZksyncApp {
         Self {
             client: Client::new(),
             rest_api_addr: rest_api_addr.into(),
-            json_rpc_addr: json_rpc_addr.into(),
+            rpc_client: RpcClient::new(json_rpc_addr),
         }
     }
 
@@ -106,8 +117,21 @@ impl ZksyncApp {
         Ok(())
     }
 
-    pub async fn send_subscription_tx(&self, _subscription_tx: &SubscriptionTx) -> Result<()> {
-        // TODO: Stub
+    pub async fn send_subscription_tx(&self, subscription_tx: &SubscriptionTx) -> Result<()> {
+        let subscription_tx = subscription_tx.clone();
+
+        let txs = vec![
+            (
+                FranklinTx::TransferFrom(Box::new(subscription_tx.transfer_to_sub)),
+                None,
+            ),
+            (
+                FranklinTx::Transfer(Box::new(subscription_tx.burn_tx)),
+                Some(subscription_tx.burn_tx_eth_signature),
+            ),
+        ];
+
+        self.rpc_client.send_txs_batch(txs).await?;
 
         Ok(())
     }
@@ -127,8 +151,8 @@ impl ZksyncApp {
     fn is_next_sub_tx(&self, subscription_tx: &SubscriptionTx) -> bool {
         let current_time = Utc::now();
 
-        subscription_tx.active_on() <= current_time
-            && subscription_tx.active_until() >= current_time
+        subscription_tx.valid_from() <= current_time
+            && subscription_tx.valid_until() >= current_time
     }
 
     /// Checks whether user subscription is expired. Currently the subscription duration is set to be

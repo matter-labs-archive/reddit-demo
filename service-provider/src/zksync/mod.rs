@@ -1,4 +1,7 @@
-use crate::{database::Subscription, zksync::rpc_client::RpcClient};
+use crate::{
+    database::Subscription,
+    zksync::{rest_client::RestApiClient, rpc_client::RpcClient},
+};
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use reqwest::Client;
@@ -48,7 +51,7 @@ impl SubscriptionTxExt for SubscriptionTx {
 #[derive(Debug)]
 pub struct ZksyncApp {
     client: Client,
-    rest_api_addr: String,
+    rest_api_client: RestApiClient,
     rpc_client: RpcClient,
     burn_account_address: Address,
 }
@@ -61,7 +64,7 @@ impl ZksyncApp {
     ) -> Self {
         Self {
             client: Client::new(),
-            rest_api_addr: rest_api_addr.into(),
+            rest_api_client: RestApiClient::new(rest_api_addr),
             rpc_client: RpcClient::new(json_rpc_addr),
             burn_account_address,
         }
@@ -101,7 +104,7 @@ impl ZksyncApp {
             // We may want to run a parallel thread which will invoke this method periodically for every subscription.
             self.send_subscription_tx(new_sub_tx).await?;
 
-            // TODO: Remove sent tx from the database.
+            // TODO: Should we remove sent tx from the database?
 
             return Ok(true);
         }
@@ -179,21 +182,29 @@ impl ZksyncApp {
             ));
         }
 
+        if subscription_tx.burn_tx.nonce != (subscription_tx.transfer_to_sub.to_nonce + 1) {
+            let burn_tx_nonce = subscription_tx.burn_tx.nonce;
+            let transfer_from_nonce = subscription_tx.transfer_to_sub.to_nonce;
+
+            return Err(anyhow!(
+                "Burn tx nonce is expected to equal (transfer_from nonce + 1), but actually transfer_from nonce: {}; burn tx nonce: {}",
+                burn_tx_nonce,
+                transfer_from_nonce,
+            ));
+        }
+
         Ok(())
     }
 
     pub async fn send_subscription_tx(&self, subscription_tx: &SubscriptionTx) -> Result<()> {
         let subscription_tx = subscription_tx.clone();
 
+        let transfer_from = FranklinTx::TransferFrom(Box::new(subscription_tx.transfer_to_sub));
+        let burn = FranklinTx::Transfer(Box::new(subscription_tx.burn_tx));
+
         let txs = vec![
-            (
-                FranklinTx::TransferFrom(Box::new(subscription_tx.transfer_to_sub)),
-                None,
-            ),
-            (
-                FranklinTx::Transfer(Box::new(subscription_tx.burn_tx)),
-                Some(subscription_tx.burn_tx_eth_signature),
-            ),
+            (transfer_from, None),
+            (burn, Some(subscription_tx.burn_tx_eth_signature)),
         ];
 
         self.rpc_client.send_txs_batch(txs).await?;
@@ -203,13 +214,101 @@ impl ZksyncApp {
 
     pub async fn last_subscription_tx(
         &self,
-        _subscription_address: Address,
+        subscription_address: Address,
     ) -> Result<Option<DateTime<Utc>>> {
-        // TODO: Stub
         // Note: Here we must check not only for the executed txs, but for pending as well.
         // However, if the latest tx was executed and failed, it must not be taken into account.
         // We should the latest of either pending or successfully executed tx for a wallet.
-        Ok(Some(Utc::now()))
+        let tx_history = self
+            .rest_api_client
+            .get_transactions_history(subscription_address)
+            .await?;
+
+        // Logic of actions below:
+        // 1. Filter out the `TransferFrom` transactions for the subscription wallet which have
+        //    the subscription cost amount.
+        // 2. Filter out the burn `Transfer` transactions which have the "burn" address recipient
+        //    and the subscription cost amount.
+        // 3. Sort the `TransferFrom` operations from newest to oldest.
+        // 4. Find such a `TransferFrom` which has a corresponding "burn" `Transfer` with nonce
+        //    next to the `TransferFrom` operation.
+        // 5. Return its timestamp.
+        // 6. If no `TransferFrom` was found, return `None`: we assume that subscription wallet
+        //    is only used for subscription payments and will not have other transactions, thus
+        //    (`TransferFrom` / "burn" `Transfer`) pair will always be in the list of latest txs
+        //    if subscription was paid at least once.
+
+        let mut transfer_from_txs: Vec<(TransferFrom, DateTime<Utc>)> = tx_history
+            .iter()
+            .filter_map(|tx| {
+                if tx.success == Some(false) {
+                    // Failed transactions aren't taken into account.
+                    return None;
+                }
+
+                if tx.tx_id == "TransferFrom" {
+                    let transfer_from: TransferFrom = serde_json::from_value(tx.tx.clone())
+                        .unwrap_or_else(|err| {
+                            panic!(
+                                "zkSync provided incorrect transaction history: {:?}. Error: {}",
+                                tx_history, err
+                            )
+                        });
+
+                    if transfer_from.amount == SUBSCRIPTION_COST.into() {
+                        Some((transfer_from, tx.created_at))
+                    } else {
+                        // Obviously not a subscription tx.
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Sort transfers by their timestamp from newest to the oldest.
+        transfer_from_txs.sort_unstable_by(|tx_a, tx_b| tx_b.1.cmp(&tx_a.1));
+
+        let burn_txs: Vec<Transfer> = tx_history
+            .iter()
+            .filter_map(|tx| {
+                if tx.tx_id == "Transfer" {
+                    let transfer: Transfer =
+                        serde_json::from_value(tx.tx.clone()).unwrap_or_else(|err| {
+                            panic!(
+                                "zkSync provided incorrect transaction history: {:?}. Error: {}",
+                                tx_history, err
+                            )
+                        });
+
+                    // Only consider burn transactions which burn the subscription cost.
+                    if transfer.to == self.burn_account_address
+                        && transfer.amount == SUBSCRIPTION_COST.into()
+                    {
+                        Some(transfer)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for (transfer_from, created_at) in transfer_from_txs {
+            let transfer_from_nonce = transfer_from.to_nonce;
+            let expected_burn_nonce = transfer_from_nonce + 1;
+
+            // Find a corresponding burn tx (it must have the nonce next to the `TransferFrom` operation).
+            for burn_tx in &burn_txs {
+                if burn_tx.nonce == expected_burn_nonce {
+                    return Ok(Some(created_at));
+                }
+            }
+        }
+
+        Ok(None)
     }
 
     /// Checks whether provided tx can be sent as the next subscription tx.

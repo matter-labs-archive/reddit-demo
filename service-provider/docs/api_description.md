@@ -228,7 +228,7 @@ const transaction = new Transaction(
 
 ```typescript
 {
-    signature: { zksyncSignature: string } // Signature for a minting transaction in a hexadecimal form.
+    signature: { zksyncSignature: Signature } // Signature for a minting transaction in a hexadecimal form.
 }
 ```
 

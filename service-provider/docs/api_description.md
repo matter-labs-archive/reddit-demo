@@ -46,26 +46,32 @@ body will match the following structure:
 }
 ```
 
-### `related_communities`
+### Important constants
+
+For the demo purpose, the following values are hard-coded for interaction:
+
+- Community name: "TestCommunity"
+- Community token name: "MLTT"
+- Amount of token granted to user (per request): 10_000 MLTT
+- Cost of monthly subscription: 100 MLTT
+
+### `genesis_wallet_address`
 
 #### Description
 
-Returns the list of communities relevant to the user (e.g. ones that can grant them tokens). User may be not subscribed to these
-communities, for subscription check see the `is_user_subscribed` endpoint.
+Returns the address of the genesis wallet.
 
 #### Input
 
 ```typescript
-{
-    user: string, // Address of the user's main wallet.
-}
+null
 ```
 
 #### Output
 
 ```typescript
 {
-    [index: number]: string // List of related community names
+    address: string // Address of the genesis wallet
 }
 ```
 
@@ -80,7 +86,7 @@ Checks if user currently subscribed to the community (meaning that the subscript
 ```typescript
 {
     user: string, // Address of the user's main wallet.
-    community_name: string, // Name of the community to be checked.
+    communityName: string, // Name of the community to be checked.
 }
 ```
 
@@ -89,8 +95,33 @@ Checks if user currently subscribed to the community (meaning that the subscript
 ```typescript
 {
     subscribed: bool, // `true` if user is currently subscribed to the community, and `false` otherwise.
-    started_at?: string, // DateTime of the subscription period start.
-    expires_at?: string, // DateTime of the subscription period end.
+    startedAt?: string, // DateTime of the subscription period start.
+    expiresAt?: string, // DateTime of the subscription period end.
+}
+```
+
+### `is_user_subscribed`
+
+#### Description
+
+Checks if user currently subscribed to the community (meaning that the subscription payment was done, and the subscription has not expired since).
+
+#### Input
+
+```typescript
+{
+    user: string, // Address of the user's main wallet.
+    communityName: string, // Name of the community to be checked.
+}
+```
+
+#### Output
+
+```typescript
+{
+    subscribed: bool, // `true` if user is currently subscribed to the community, and `false` otherwise.
+    startedAt?: string, // DateTime of the subscription period start.
+    expiresAt?: string, // DateTime of the subscription period end.
 }
 ```
 
@@ -101,17 +132,38 @@ Initiates a subscription by doing the following:
 - Notifies the Community Oracle about the subscription wallet for community created by user.
 - Adds the pre-signed transactions for subscription payment.
 
-**Note:** As the API for subscribing is not yet implemented, the structure of the `SubscriptionTx` type is currently **unknown**.
-This document will be updated with the required type definition once it's designed.
+Sample usage code (assuming using the most recent `zksync.js` version):
+
+```typescript
+const subscriptionMonths = 12;
+const subscriptionTransactions = await wallet.createSubscriptionTransactions(subscriptionWallet, subscriptionMonths);
+
+const subscriptionRequest = {
+    "user": wallet.address(),
+    "communityName": "TestCommunity",
+    "subscriptionWallet": subscriptionWallet.address(),
+    txs: subscriptionTransactions
+};
+```
 
 #### Input
 
 ```typescript
 {
     user: string, // Address of the user's main wallet.
-    community_name: string, // Name of the community to be checked.
-    subscription_wallet: string, // Address of the subscription wallet.
-    [index: number]: SubscriptionTx, // List of the pre-signed txs to pay for subscription.
+    communityName: string, // Name of the community to be checked.
+    subscriptionWallet: string, // Address of the subscription wallet.
+    txs: SubscriptionTx[], // List of the pre-signed txs to pay for subscription.
+}
+```
+
+Subscription Tx is defined as follows: 
+
+```typescript
+{
+    transferToSub: TransferFrom,
+    burnTx: Transfer,
+    burnTxEthSignature: string,
 }
 ```
 
@@ -132,7 +184,7 @@ Returns the type and amount of community tokens that user can mint.
 ```typescript
 {
     user: string, // Address of the user's main wallet.
-    community_name: string, // Name of the community to be checked.
+    communityName: string, // Name of the community to be checked.
 }
 ```
 
@@ -152,16 +204,47 @@ Returns the type and amount of community tokens that user can mint.
 
 Checks that user provided a correct minting transaction, and provides a signature for it.
 
-**Note:** As the API for subscribing is not yet implemented, the structure of the `MintingTransaction` type is currently **unknown**.
-This document will be updated with the required type definition once it's designed.
+To use this method, a minting transaction must be initially created. 
+
+Sample usage code (assuming using the most recent `zksync.js` version):
+
+```typescript
+// As the "from" signature is currently unknown, initialize it as an empty signature.
+let fromSignature = {
+    "pubKey":"0000000000000000000000000000000000000000000000000000000000000000",
+    "signature":"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+}; 
+let mintingTx = await wallet.createTransferFromNoSend({
+    from: genesisWalletAddress,
+    token: "MLTT",
+    amount: 10000,
+    fee: transferFromFee,
+    nonce: walletNonce,
+    validFrom, // Should be equal to the current time, so it may be executed right after signing.
+    validUntil, // Better to set as "validFrom + 1 day"
+    fromSignature,
+});
+
+mintingTx.fromSignature = ...; // Now that we have a `TransferFrom` object, we can request minting signature from the Service Provider.
+
+// Submit signed minting tx.
+const submitResponse = await wallet.provider.submitTx(signedWithdrawTransaction);
+
+// If required, we can create a "Transaction" object.
+const transaction = new Transaction(
+    mintingTx,
+    submitResponse,
+    wallet.provider
+);
+```
 
 #### Input
 
 ```typescript
 {
     user: string, // Address of the user's main wallet.
-    community_name: string, // Name of the community to be checked.
-    minting_tx: MintingTransaction, // Created, but not signed minting transaction.
+    communityName: string, // Name of the community to be checked.
+    mintingTx: TransferFrom, // Created, but not signed minting transaction.
 }
 ```
 
@@ -169,7 +252,7 @@ This document will be updated with the required type definition once it's design
 
 ```typescript
 {
-    signature: string // Signature for a minting transaction in a hexadecimal form.
+    signature: { zksyncSignature: string } // Signature for a minting transaction in a hexadecimal form.
 }
 ```
 

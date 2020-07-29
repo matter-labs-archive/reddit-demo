@@ -56,6 +56,17 @@ impl CommunityOracle {
         Ok(Self::convert_response(reqwest_response).await)
     }
 
+    pub async fn genesis_wallet_address(&self, request: ()) -> Result<HttpResponse> {
+        let reqwest_response = self
+            .client
+            .post(&self.genesis_wallet_address_endpoint())
+            .json(&request)
+            .send()
+            .await?;
+
+        Ok(Self::convert_response(reqwest_response).await)
+    }
+
     fn tokens_for_user_endpoint(&self) -> String {
         format!("{}/api/v0.1/granted_tokens", &self.oracle_addr)
     }
@@ -66,6 +77,10 @@ impl CommunityOracle {
 
     fn related_communities_endpoint(&self) -> String {
         format!("{}/api/v0.1/related_communities", &self.oracle_addr)
+    }
+
+    fn genesis_wallet_address_endpoint(&self) -> String {
+        format!("{}/api/v0.1/genesis_wallet_address", &self.oracle_addr)
     }
 
     /// Transforms the `reqwest` response type into `actix_web::HttpResponse`.

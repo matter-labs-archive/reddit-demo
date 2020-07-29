@@ -149,6 +149,17 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         }))
     }
 
+    pub async fn genesis_wallet_address(
+        provider: web::Data<Self>,
+        request: web::Json<()>,
+    ) -> Result<HttpResponse> {
+        let request = request.into_inner();
+
+        let response = provider.oracle.genesis_wallet_address(request).await?;
+
+        Ok(response)
+    }
+
     /// Wrapper around functions that return `anyhow::Result` which converts it to the `HttpResponse`.
     /// This decorator allows handler functions to return `Result` and use `?` for convenient error propagation.
     ///
@@ -193,6 +204,10 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
             .service(
                 web::resource("/related_communities")
                     .to(|p, data| Self::failable(Self::related_communities, p, data)),
+            )
+            .service(
+                web::resource("/genesis_wallet_address")
+                    .to(|p, data| Self::failable(Self::genesis_wallet_address, p, data)),
             )
     }
 }

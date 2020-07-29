@@ -19,6 +19,7 @@ pub use zksync_models::node::{Address, PrivateKey, H256};
 pub type MintingTransaction = TransferFrom;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MintingSignature {
     zksync_signature: TxSignature,
 }

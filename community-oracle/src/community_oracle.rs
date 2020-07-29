@@ -4,12 +4,12 @@ use crate::{
     responses::{
         ErrorResponse, GrantedTokensResponse, MintingSignatureResponse, RelatedCommunitiesResponse,
     },
-    zksync::MintingApi,
+    zksync::{Address, MintingApi},
 };
 use actix_web::{web, HttpResponse, Responder, Scope};
 use std::{collections::HashMap, sync::Arc};
 
-pub const DEFAULT_TOKENS_AMOUNT: u64 = 100;
+pub const DEFAULT_TOKENS_AMOUNT: u64 = 10_000;
 
 const TEST_COMMUNITY_NAME: &str = "TestCommunity";
 const TEST_COMMUNITY_TOKEN: &str = "ETH";
@@ -35,10 +35,12 @@ pub struct CommunityOracle {
     known_communities: HashMap<String, CommunityInfo>,
     minter: Arc<MintingApi>,
     tokens_amount: u64,
+    genesis_wallet_address: Address,
 }
 
 impl CommunityOracle {
     pub fn new(config: AppConfig) -> Self {
+        let genesis_wallet_address = config.genesis_account_address;
         let known_communities = vec![(
             TEST_COMMUNITY_NAME.to_string(),
             CommunityInfo::new(0, TEST_COMMUNITY_TOKEN),
@@ -48,6 +50,7 @@ impl CommunityOracle {
             known_communities: known_communities.into_iter().collect(),
             minter: Arc::new(MintingApi::new(config)),
             tokens_amount: DEFAULT_TOKENS_AMOUNT,
+            genesis_wallet_address,
         }
     }
 
@@ -115,11 +118,23 @@ impl CommunityOracle {
         HttpResponse::Ok().json(response)
     }
 
+    pub async fn genesis_wallet_address(
+        oracle: web::Data<Self>,
+        _request: web::Json<()>,
+    ) -> impl Responder {
+        let response = serde_json::json!({
+            "address": oracle.genesis_wallet_address,
+        });
+
+        HttpResponse::Ok().json(response)
+    }
+
     pub fn into_web_scope(self) -> Scope {
         web::scope("api/v0.1/")
             .data(self)
             .service(web::resource("/granted_tokens").to(Self::tokens_for_user))
             .service(web::resource("/get_minting_signature").to(Self::sign_minting_tx))
             .service(web::resource("/related_communities").to(Self::related_communities))
+            .service(web::resource("/genesis_wallet_address").to(Self::genesis_wallet_address))
     }
 }

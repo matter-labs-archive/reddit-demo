@@ -31,12 +31,24 @@ pub struct MintingApi {
 
 impl MintingApi {
     pub fn new(config: AppConfig) -> Self {
-        let private_key_bytes =
+        // Read zkSync private key for genesis account.
+        let private_key_bytes: Vec<_> =
             hex::decode(config.genesis_account_private_key.trim_start_matches("0x"))
-                .expect("Incorrect private key for genesis account");
+                .expect("Incorrect private key for genesis account")
+                .into_iter()
+                .rev()
+                .collect();
         let zk_private_key = PrivateKey::read(&private_key_bytes[..])
-            .expect("Incorrect private key for genesis account");
-        let eth_private_key = H256::from_slice(&private_key_bytes);
+            .expect("Incorrect private zkSync key for genesis account");
+
+        // Read Ethereum private key for genesis account.
+        let eth_private_key_bytes = hex::decode(
+            config
+                .genesis_account_eth_private_key
+                .trim_start_matches("0x"),
+        )
+        .expect("Incorrect private Ethereum key for genesis account");
+        let eth_private_key = H256::from_slice(&eth_private_key_bytes);
 
         let mint_account = ZksyncAccount::new(
             zk_private_key,

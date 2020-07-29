@@ -8,6 +8,7 @@ pub struct AppConfig {
     pub genesis_account_id: u32,
     pub genesis_account_address: Address,
     pub genesis_account_private_key: String,
+    pub genesis_account_eth_private_key: String,
 }
 
 impl AppConfig {
@@ -33,6 +34,8 @@ impl AppConfig {
                 .unwrap(),
             genesis_account_private_key: env::var("GENESIS_ACCOUNT_PRIVATE_KEY")
                 .expect("GENESIS_ACCOUNT_PRIVATE_KEY"),
+            genesis_account_eth_private_key: env::var("GENESIS_ACCOUNT_ETH_PRIVATE_KEY")
+                .expect("GENESIS_ACCOUNT_ETH_PRIVATE_KEY"),
         }
     }
 }

@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ErrorResponse {
     pub error_description: String,
 }
@@ -15,6 +16,7 @@ impl ErrorResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubscriptionCheckResponse {
     pub subscribed: bool,
     pub started_at: Option<DateTime<Utc>>,

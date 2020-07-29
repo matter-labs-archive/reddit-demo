@@ -9,18 +9,21 @@ pub use community_oracle::requests::{
 };
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DeclareCommunityRequest {
     #[serde(flatten)]
     pub community: Community,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubscriptionCheckRequest {
     pub user: Address,
     pub community_name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubscribeRequest {
     pub user: Address,
     pub community_name: String,

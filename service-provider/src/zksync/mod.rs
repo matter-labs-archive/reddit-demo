@@ -19,6 +19,7 @@ pub use zksync_models::node::Address;
 pub const SUBSCRIPTION_COST: u64 = 100;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubscriptionTx {
     transfer_to_sub: TransferFrom,
     burn_tx: Transfer,

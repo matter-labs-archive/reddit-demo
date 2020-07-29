@@ -3,5 +3,5 @@
     "zksync_rest_api_address": "http://127.0.0.1:3001",
     "zksync_json_rpc_address": "http://127.0.0.1:3030",
     "community_oracle_address": "http://127.0.0.1:4040",
-    "burn_account_address": "0x0000000000000000000000000000000000000001",
+    "burn_account_address": "0x0000000000000000000000000000000000000001"
 }

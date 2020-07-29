@@ -9,6 +9,7 @@ Currently Service Provider has the following API structure:
 - `/api/v0.1/subscribe` - initiate subscription by providing the address of the subscription wallet and pre-signed subscription transactions for several months.
 - `/api/v0.1/granted_tokens` - check how many community tokens user can mint for a certain community.
 - `/api/v0.1/get_minting_signature` - get a signature for the minting transaction.
+- `/api/v0.1/genesis_wallet_address` - get a genesis wallet address.
 
 Additional (logically private) API endpoints:
 

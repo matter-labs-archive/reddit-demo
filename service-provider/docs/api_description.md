@@ -101,31 +101,6 @@ Checks if user currently subscribed to the community (meaning that the subscript
 }
 ```
 
-### `is_user_subscribed`
-
-#### Description
-
-Checks if user currently subscribed to the community (meaning that the subscription payment was done, and the subscription has not expired since).
-
-#### Input
-
-```typescript
-{
-    user: string, // Address of the user's main wallet.
-    communityName: string, // Name of the community to be checked.
-}
-```
-
-#### Output
-
-```typescript
-{
-    subscribed: bool, // `true` if user is currently subscribed to the community, and `false` otherwise.
-    startedAt?: string, // DateTime of the subscription period start.
-    expiresAt?: string, // DateTime of the subscription period end.
-}
-```
-
 ### `subscribe`
 
 Initiates a subscription by doing the following:

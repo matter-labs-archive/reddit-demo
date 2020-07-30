@@ -127,8 +127,8 @@ async function mintTokens(userWallet: Wallet, communityName: string, token: stri
         amount,
         fee: transferFromFee,
         nonce: walletNonce,
-        validFrom, // Should be equal to the current time, so it may be executed right after signing.
-        validUntil, // Better to set as "validFrom + 1 day"
+        validFrom,
+        validUntil,
         fromSignature,
     });
 
@@ -163,10 +163,10 @@ async function createSubscriptionWallet(userWallet: Wallet, communityName: strin
 async function subscribe(userWallet: Wallet, subscriptionWallet: Wallet, communityName: string) {
     const serviceProvider = new ServiceProvider(SERVICE_PROVIDER_URL);
 
-    // const months = 12;
-    // const subscriptionTxs = await userWallet.createSubscriptionTransactions(subscriptionWallet, months);
+    const months = 12;
+    const subscriptionTxs = await userWallet.createSubscriptionTransactions(subscriptionWallet, months);
 
-    // await serviceProvider.subscribe(userWallet.address(), communityName, subscriptionWallet.address(), subscriptionTxs);
+    await serviceProvider.subscribe(userWallet.address(), communityName, subscriptionWallet.address(), subscriptionTxs);
 }
 
 (async () => {

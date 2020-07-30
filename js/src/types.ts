@@ -30,5 +30,5 @@ export interface MintedSignatureResponse {
 export interface SubscriptionTx {
     transferToSub: zksync.types.TransferFrom,
     burnTx: zksync.types.Transfer,
-    burnTxEthSignature: zksync.types.Signature,
+    burnTxEthSignature: zksync.types.TxEthSignature,
 }

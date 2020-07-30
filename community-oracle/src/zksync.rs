@@ -1,13 +1,10 @@
-//! Wrapper around zkSync abstractions.
-//!
-//! Currently this module has two significant things that has to be kept in mind:
-//!
-//! 1. As a gateway, this module uses `testkit` package from the zkSync core. This package
-//!   is only used because currently there is no official zkSync client library in Rust.
-//!   Note that the main purpose of `testkit` crate is to provide the *testing* infrastructure
-//!   rather than a full-fledged client experience.
-//! 2. Until zkSync server implements minting/burning API, it is assumed that minting is done
-//!   via transfers from a rich ("genesis") account.
+//! Module encapsulating the interaction with the zkSync network.
+
+// Note:
+// As a gateway, this module uses `testkit` package from the zkSync core. This package
+// is only used because currently there is no official zkSync client library in Rust.
+// Note that the main purpose of `testkit` crate is to provide the *testing* infrastructure
+// rather than a full-fledged client experience.
 
 use crate::config::AppConfig;
 use serde_derive::{Deserialize, Serialize};

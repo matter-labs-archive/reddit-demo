@@ -94,8 +94,6 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         Ok(response)
     }
 
-    // TODO: Unsubscribe (what should this method do? provide a "change pubkey" tx?) Alternative -- this is a fully client-side function, provider has nothing to do with it.
-
     pub async fn tokens_for_user(
         provider: web::Data<Self>,
         request: web::Json<GrantedTokensRequest>,

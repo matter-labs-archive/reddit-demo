@@ -1,3 +1,7 @@
+//! Type definitions for the API responses of the Service Provider.
+//! Note that some of types are re-exported from the `community-oracle` crate.
+//! See the `community_oracle::responses` module for their definitions.
+
 use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 

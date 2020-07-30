@@ -1,3 +1,11 @@
+//! Module encapsulating the interaction with the zkSync network.
+
+// Note:
+// As a gateway, this module uses `testkit` package from the zkSync core. This package
+// is only used because currently there is no official zkSync client library in Rust.
+// Note that the main purpose of `testkit` crate is to provide the *testing* infrastructure
+// rather than a full-fledged client experience.
+
 use crate::{
     database::Subscription,
     zksync::{rest_client::RestApiClient, rpc_client::RpcClient},
@@ -14,7 +22,8 @@ mod rpc_client;
 // Public re-exports and type declarations to not tie the rest application to the actual zkSync types.
 pub use zksync_models::node::Address;
 
-// TODO: This should not be a hard-coded constant.
+// TODO: This should not be a hard-coded constant. However, if you see this line, the deadline has hit
+// us and we had no time to fix this issue. ¯\_(ツ)_/¯
 /// Cost of the subscription.
 pub const SUBSCRIPTION_COST: u64 = 100;
 
@@ -71,6 +80,16 @@ impl ZksyncApp {
         }
     }
 
+    /// Checks whether user is currently subscribed to the community. Logic of this method
+    /// can be described as follows:
+    ///
+    /// - If the subscription wallet has the subscription transactions in the history, and the most recent
+    ///   one was sent within the subscription interval, user is considered subscribed.
+    /// - If last transaction is already expired or no subscription transactions were sent at all, check the stored
+    ///   list of pre-signed subscription transactions, and then send the suitable one. Use will be considered still
+    ///   subscribed (if the transaction will fail, user will be "unsubscribed" as soon as it's executed by zkSync server)
+    /// - Otherwise (no actual transaction in the account history, no new transaction to send), user is considered not
+    ///   subscribed.
     pub async fn is_user_subscribed(&self, subscription: Subscription) -> Result<bool> {
         match self
             .last_subscription_tx(subscription.subscription_wallet)
@@ -108,8 +127,6 @@ impl ZksyncApp {
             // We may want to run a parallel thread which will invoke this method periodically for every subscription.
             self.send_subscription_tx(new_sub_tx).await?;
 
-            // TODO: Should we remove sent tx from the database?
-
             return Ok(true);
         }
 
@@ -117,6 +134,8 @@ impl ZksyncApp {
         Ok(false)
     }
 
+    /// Retrieves the subscription period for user in form of `(from, to)` tuple.
+    /// Returns `(None, None)` if user is not subscribed.
     pub async fn get_subscription_period(
         &self,
         subscription: Subscription,
@@ -141,6 +160,7 @@ impl ZksyncApp {
         Ok((started_at, expires_at))
     }
 
+    /// Verifies that provided subscription transaction is correct and may be stored.
     pub async fn check_subscription_tx(
         &self,
         subscription: &Subscription,
@@ -200,6 +220,7 @@ impl ZksyncApp {
         Ok(())
     }
 
+    /// Sends the provided transaction to the zkSync network.
     pub async fn send_subscription_tx(&self, subscription_tx: &SubscriptionTx) -> Result<()> {
         let subscription_tx = subscription_tx.clone();
 
@@ -222,6 +243,8 @@ impl ZksyncApp {
         Ok(())
     }
 
+    /// Attempts to retrieve timestamp of the last subscription transaction executed on
+    /// the provided subscription wallet.
     pub async fn last_subscription_tx(
         &self,
         subscription_address: Address,

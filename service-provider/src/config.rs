@@ -10,7 +10,6 @@ pub struct AppConfig {
     pub zksync_json_rpc_address: String,
     pub community_oracle_address: String,
     pub burn_account_address: Address,
-    // TODO: Database params
 }
 
 impl AppConfig {

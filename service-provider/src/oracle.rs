@@ -1,3 +1,8 @@
+//! This module provides a `CommunityOracle` type: an entity capable of
+//! the interaction with the Community Oracle application.
+//! Basically, all it does is performs an API requests and converts them into
+//! `HttpResponse` to be forwarded back to user.
+
 use crate::{
     requests::{GrantedTokensRequest, MintingSignatureRequest, RelatedCommunitiesRequest},
     responses::ErrorResponse,

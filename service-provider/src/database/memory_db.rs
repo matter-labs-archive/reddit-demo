@@ -61,8 +61,6 @@ impl DatabaseAccess for MemoryDb {
 
     async fn declare_community(&self, community: Community) -> Result<()> {
         let mut communities = self.communities.write().unwrap();
-
-        // TODO: Handle duplicates
         communities.insert(community.name.clone(), community);
 
         Ok(())

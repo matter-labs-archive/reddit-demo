@@ -1,3 +1,15 @@
+//! Reddit Service Provider -- an application to built subscriptions support atop of the zkSync network.
+//!
+//! This application has the following modules:
+//! - `config`: configuration of the application (can be loaded either from JSON or environment variables);
+//! - `database`: bindings of the application data schema to the database back-ends;
+//! - `oracle`: module of the interaction with the Community Oracle application;
+//! - `zksync`: module of the interaction with the zkSync network;
+//! - `utils`: minor helper functions;
+//! - `requests`: incoming request types for the API server;
+//! - `responses`: outgoing response types for the API server;
+//! - `service_provider`: API server and controller for the logic of the application.
+
 use crate::{
     config::AppConfig,
     database::{DatabaseAccess, MemoryDb},

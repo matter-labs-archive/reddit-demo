@@ -1,3 +1,11 @@
+//! Database module provides an abstract interface of the data persisting layer.
+//!
+//! Main entity of this module is the `DatabaseAccess` trait, which describes all the
+//! data interaction methods required by the application.
+//!
+//! Currently, the only implementor is `memory_db::MemoryDb`, storing all the data in the
+//! memory, but other back-ends (e.g. for SQL or NoSQL database) can be implemented on demand.
+
 use crate::zksync::{Address, SubscriptionTx};
 use anyhow::Result;
 use async_trait::async_trait;

@@ -7,7 +7,7 @@ and manage subscriptions to these communities.
 
 ## Solution overflow
 
-An architectural overview of the solution and all the involved parties can be found at the [workflow spec] docs section.
+An architectural overview of the solution and all the involved parties can be found at the [workflow spec](./docs/workflow_spec.md) docs section.
 
 ## Components
 

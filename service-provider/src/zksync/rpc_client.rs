@@ -46,23 +46,6 @@ impl RpcClient {
         Ok(tx_hashes)
     }
 
-    /// Requests and returns a tuple `(executed, verified)` (as `OperationState`) for
-    /// a transaction given its hash`.
-    pub async fn tx_info(&self, tx_hash: TxHash) -> Result<OperationState> {
-        let msg = JsonRpcRequest::tx_info(tx_hash);
-
-        let ret = self.post(&msg).await?;
-        let obj = ret.as_object().unwrap();
-        let executed = obj["executed"].as_bool().unwrap();
-        let verified = if executed {
-            let block = obj["block"].as_object().unwrap();
-            block["verified"].as_bool().unwrap()
-        } else {
-            false
-        };
-        Ok(OperationState { executed, verified })
-    }
-
     /// Performs a POST query to the JSON RPC endpoint,
     /// and decodes the response, returning the decoded `serde_json::Value`.
     /// `Ok` is returned only for successful calls, for any kind of error
@@ -106,10 +89,7 @@ impl RpcClient {
 /// Structures representing the RPC request messages.
 mod messages {
     use serde_derive::Serialize;
-    use zksync_models::node::{
-        tx::{FranklinTx, PackedEthSignature, TxEthSignature, TxHash},
-        Address,
-    };
+    use zksync_models::node::tx::{FranklinTx, PackedEthSignature, TxEthSignature};
 
     #[derive(Debug, Serialize)]
     pub struct JsonRpcRequest {
@@ -148,26 +128,6 @@ mod messages {
             let mut params = Vec::new();
             params.push(serde_json::to_value(txs).expect("serialization fail"));
             Self::create("submit_txs_batch", params)
-        }
-
-        pub fn ethop_info(serial_id: u64) -> Self {
-            let mut params = Vec::new();
-            params.push(serde_json::to_value(serial_id).expect("serialization fail"));
-            Self::create("ethop_info", params)
-        }
-
-        pub fn tx_info(tx_hash: TxHash) -> Self {
-            let mut params = Vec::new();
-            params.push(serde_json::to_value(tx_hash).expect("serialization fail"));
-            Self::create("tx_info", params)
-        }
-
-        pub fn get_tx_fee(tx_type: &str, address: Address, token_symbol: &str) -> Self {
-            let mut params = Vec::new();
-            params.push(serde_json::to_value(tx_type).expect("serialization fail"));
-            params.push(serde_json::to_value(address).expect("serialization fail"));
-            params.push(serde_json::to_value(token_symbol).expect("serialization fail"));
-            Self::create("get_tx_fee", params)
         }
     }
 }

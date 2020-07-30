@@ -3,7 +3,7 @@
 // Built-in imports
 // External uses
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde_derive::{Deserialize, Serialize};
 // Workspace uses
 // Local uses
@@ -20,7 +20,7 @@ pub struct TransactionsHistoryItem {
     pub fail_reason: Option<String>,
     pub commited: bool,
     pub verified: bool,
-    pub created_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
 }
 
 /// `RpcClient` is capable of interacting with the ZKSync node via its
@@ -44,6 +44,8 @@ impl RestApiClient {
         &self,
         address: Address,
     ) -> Result<Vec<TransactionsHistoryItem>> {
+        let address = format!("0x{}", hex::encode(address.as_ref()));
+
         let formatted_postfix = format!(
             "/account/{address}/history/{offset}/{limit}",
             address = address,
@@ -52,12 +54,13 @@ impl RestApiClient {
         );
         let endpoint = self.endpoint(&formatted_postfix);
 
-        let response = self.client.post(&endpoint).send().await?;
+        let response = self.client.get(&endpoint).send().await?;
 
         let json_data: Vec<TransactionsHistoryItem> = match response.json().await {
             Ok(json) => json,
             Err(error) => {
                 log::error!("zkSync server returned incorrect JSON: {}", error);
+                log::error!("request path: {}", &endpoint);
                 return Err(anyhow!("Unable to decode response from the zkSync server",));
             }
         };

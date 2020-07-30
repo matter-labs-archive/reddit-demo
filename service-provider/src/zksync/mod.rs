@@ -72,27 +72,30 @@ impl ZksyncApp {
     }
 
     pub async fn is_user_subscribed(&self, subscription: Subscription) -> Result<bool> {
-        let last_subscription_tx_on = match self
+        match self
             .last_subscription_tx(subscription.subscription_wallet)
             .await?
         {
-            Some(datetime) => datetime,
-            None => return Ok(false),
+            Some(datetime) => {
+                // If subscription is outdated, but there are some not sent pre-signed txs yet, we must
+                // say that user is subscribed and immediately send the subscription tx to zkSync.
+                // User must be considered quasi-subscribed until tx is executed.
+                // This is required to ensure that there are no short periods of "not subscribed" state between
+                // subscription periods.
+                let subscribed = self.check_subscription_status(datetime);
+
+                if subscribed {
+                    // User is subscribed, no further actions required.
+                    return Ok(true);
+                }
+            }
+            None => {
+                // No subscription txs yet, we must send one (if possible).
+            }
         };
 
-        // If subscription is outdated, but there are some not sent pre-signed txs yet, we must
-        // say that user is subscribed and immediately send the subscription tx to zkSync.
-        // User must be considered quasi-subscribed until tx is executed.
-        // This is required to ensure that there are no short periods of "not subscribed" state between
-        // subscription periods.
-        let subscribed = self.check_subscription_status(last_subscription_tx_on);
-
-        if subscribed {
-            // User is subscribed, no further actions required.
-            return Ok(true);
-        }
-
-        // User is not subscribed, we have to check if we can send the next subscription tx.
+        // User is not subscribed (either subscription is outdated, or no transactions were sent at all yet),
+        // we have to check if we can send the next subscription tx.
         let new_sub_tx = subscription
             .pre_signed_txs
             .iter()
@@ -223,6 +226,10 @@ impl ZksyncApp {
         &self,
         subscription_address: Address,
     ) -> Result<Option<DateTime<Utc>>> {
+        fn get_tx_type(tx: &serde_json::Value) -> Option<&str> {
+            tx.get("type").map(|value| value.as_str()).flatten()
+        }
+
         // Note: Here we must check not only for the executed txs, but for pending as well.
         // However, if the latest tx was executed and failed, it must not be taken into account.
         // We should the latest of either pending or successfully executed tx for a wallet.
@@ -253,7 +260,7 @@ impl ZksyncApp {
                     return None;
                 }
 
-                if tx.tx_id == "TransferFrom" {
+                if get_tx_type(&tx.tx) == Some("TransferFrom") {
                     let transfer_from: TransferFrom = serde_json::from_value(tx.tx.clone())
                         .unwrap_or_else(|err| {
                             panic!(
@@ -263,7 +270,7 @@ impl ZksyncApp {
                         });
 
                     if transfer_from.amount == SUBSCRIPTION_COST.into() {
-                        Some((transfer_from, tx.created_at))
+                        Some((transfer_from, DateTime::from_utc(tx.created_at, Utc)))
                     } else {
                         // Obviously not a subscription tx.
                         None
@@ -280,7 +287,7 @@ impl ZksyncApp {
         let burn_txs: Vec<Transfer> = tx_history
             .iter()
             .filter_map(|tx| {
-                if tx.tx_id == "Transfer" {
+                if get_tx_type(&tx.tx) == Some("Transfer") {
                     let transfer: Transfer =
                         serde_json::from_value(tx.tx.clone()).unwrap_or_else(|err| {
                             panic!(

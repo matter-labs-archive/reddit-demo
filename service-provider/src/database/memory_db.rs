@@ -33,10 +33,9 @@ impl MemoryDb {
     {
         let mut existing_subscriptions = self.subscriptions.write().unwrap();
 
-        let mut subscriptions = existing_subscriptions
+        let subscriptions: &mut Vec<Subscription> = existing_subscriptions
             .get_mut(&address)
-            .cloned()
-            .unwrap_or_default();
+            .ok_or_else(|| MemoryDbError::UserIsNotSubscribed)?;
 
         let subscription: &mut Subscription = subscriptions
             .iter_mut()

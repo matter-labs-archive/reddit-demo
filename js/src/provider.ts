@@ -45,7 +45,8 @@ export class Provider {
 
     async genesisWalletAddress(): Promise<zksync.types.Address> {
         let endpoint = this.transport.endpoint("/genesis_wallet_address");
-        return await this.transport.request(endpoint)
+        let response = await this.transport.request(endpoint);
+        return response.address;
     }
 
     async isUserSubscribed(user: string, communityName: string): Promise<SubscriptionCheckResponse> {
@@ -53,7 +54,7 @@ export class Provider {
         return await this.transport.request(endpoint, {
             user,
             communityName
-        })
+        });
     }
 
     async grantedTokens(user: string, communityName: string): Promise<GrantedTokensResponse> {
@@ -61,7 +62,7 @@ export class Provider {
         return await this.transport.request(endpoint, {
             user,
             communityName
-        })
+        });
     }
 
     async getMintingSignature(user: string, communityName: string, mintingTx: zksync.types.TransferFrom): Promise<zksync.types.Signature> {

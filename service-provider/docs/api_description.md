@@ -11,10 +11,6 @@ Currently Service Provider has the following API structure:
 - `/api/v0.1/get_minting_signature` - get a signature for the minting transaction.
 - `/api/v0.1/genesis_wallet_address` - get a genesis wallet address.
 
-Additional (logically private) API endpoints:
-
-- `/api/v0.1/declare_commuity` - notify Service Provider about a new community created.
-
 ## Workflow
 
 The expected client flow is the following:

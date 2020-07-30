@@ -184,18 +184,24 @@ All the other data is stored in the zkSync blockchain, which is, on the other ha
 Assuming that the community information and usernames are owned by Reddit, and without the Reddit the only available operation is to withdraw funds, the following problems and solutions are possible:
 
 1. Service provider is down.
+  
   **Solution:**
+  
     - A new service provider is created.
     - Reddit provides all the information about its communities.
     - Users register themselves again and provide the subscriptions addresses they've 
     - For every registered user, zkSync blockchain is scanned and all the transactions are found.
     - Existing subscriptions are restored.
 2. Service provider is down and zkSync network is down.
+  
   **Solution:**
+  
     - A new instance of zkSync server is created.
     - zkSync network state is restored using the Ethereum network (from the zkSync contract)
     - The remaining part of solution is the same as in the scenario 1.
 3. Reddit, Service provider and zkSync network are down.
+  
   **Solution:**
+  
     - After contracts discovers that zkSync is unresponsive for a long time, it enters the exodus mode.
     - All the users can generate exit proofs and withdraw their tokens back to the Ethereum account.

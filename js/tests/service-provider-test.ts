@@ -161,9 +161,11 @@ async function createSubscriptionWallet(userWallet: Wallet, communityName: strin
     const subscriptionWallet = await userWallet.createDerivedWallet(postfix);
 
     // Initialize the wallet via `ChangePubKey` operation.
-    await subscriptionWallet.setSigningKey();
+    let changePubkeyTx = await subscriptionWallet.setSigningKey();
+    await changePubkeyTx.awaitReceipt();
+
     let accountId = await subscriptionWallet.getAccountId();
-    console.log(`Subscription wallet account ID is ${accountId}`);
+    console.log(`Subscription accound ID is ${accountId}`);
 
     return subscriptionWallet;
 }

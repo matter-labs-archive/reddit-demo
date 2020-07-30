@@ -149,15 +149,13 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
         }))
     }
 
-    pub async fn genesis_wallet_address(
-        provider: web::Data<Self>,
-        request: web::Json<()>,
-    ) -> Result<HttpResponse> {
-        let request = request.into_inner();
+    pub async fn genesis_wallet_address(provider: web::Data<Self>) -> HttpResponse {
+        let response = provider.oracle.genesis_wallet_address(()).await;
 
-        let response = provider.oracle.genesis_wallet_address(request).await?;
-
-        Ok(response)
+        match response {
+            Ok(response) => response,
+            Err(error) => response_from_error(error),
+        }
     }
 
     /// Wrapper around functions that return `anyhow::Result` which converts it to the `HttpResponse`.
@@ -205,9 +203,6 @@ impl<DB: 'static + DatabaseAccess> ServiceProvider<DB> {
                 web::resource("/related_communities")
                     .to(|p, data| Self::failable(Self::related_communities, p, data)),
             )
-            .service(
-                web::resource("/genesis_wallet_address")
-                    .to(|p, data| Self::failable(Self::genesis_wallet_address, p, data)),
-            )
+            .service(web::resource("/genesis_wallet_address").to(Self::genesis_wallet_address))
     }
 }

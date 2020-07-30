@@ -6,7 +6,7 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use zksync_models::node::tx::{FranklinTx, PackedEthSignature, Transfer, TransferFrom};
+use zksync_models::node::tx::{FranklinTx, Transfer, TransferFrom, TxEthSignature};
 
 mod rest_client;
 mod rpc_client;
@@ -23,7 +23,7 @@ pub const SUBSCRIPTION_COST: u64 = 100;
 pub struct SubscriptionTx {
     transfer_to_sub: TransferFrom,
     burn_tx: Transfer,
-    burn_tx_eth_signature: PackedEthSignature,
+    burn_tx_eth_signature: TxEthSignature,
 }
 
 /// Extension trait for `SubscriptionTx` type adding convenient getters for the required functionality.
@@ -203,10 +203,16 @@ impl ZksyncApp {
         let transfer_from = FranklinTx::TransferFrom(Box::new(subscription_tx.transfer_to_sub));
         let burn = FranklinTx::Transfer(Box::new(subscription_tx.burn_tx));
 
-        let txs = vec![
-            (transfer_from, None),
-            (burn, Some(subscription_tx.burn_tx_eth_signature)),
-        ];
+        let burn_tx_eth_signature = match subscription_tx.burn_tx_eth_signature {
+            TxEthSignature::EthereumSignature(sig) => sig,
+            _ => {
+                return Err(anyhow!(
+                    "Incorrect type of signature: expected EthereumSignature"
+                ))
+            }
+        };
+
+        let txs = vec![(transfer_from, None), (burn, Some(burn_tx_eth_signature))];
 
         self.rpc_client.send_txs_batch(txs).await?;
 

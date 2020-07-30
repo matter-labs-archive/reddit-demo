@@ -72,7 +72,7 @@ impl CommunityOracle {
     }
 
     fn sign_minting_tx_endpoint(&self) -> String {
-        format!("{}/api/v0.1/sign_minting_tx", &self.oracle_addr)
+        format!("{}/api/v0.1/get_minting_signature", &self.oracle_addr)
     }
 
     fn related_communities_endpoint(&self) -> String {

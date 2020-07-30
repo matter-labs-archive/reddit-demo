@@ -43,7 +43,7 @@ body will match the following structure:
 
 ```typescript
 {
-    error: string // Occurred error description
+    error: string; // Occurred error description
 }
 ```
 
@@ -72,7 +72,7 @@ null
 
 ```typescript
 {
-    address: string // Address of the genesis wallet
+    address: string; // Address of the genesis wallet
 }
 ```
 
@@ -86,8 +86,8 @@ Checks if user currently subscribed to the community (meaning that the subscript
 
 ```typescript
 {
-    user: string, // Address of the user's main wallet.
-    communityName: string, // Name of the community to be checked.
+    user: string; // Address of the user's main wallet.
+    communityName: string; // Name of the community to be checked.
 }
 ```
 
@@ -95,9 +95,9 @@ Checks if user currently subscribed to the community (meaning that the subscript
 
 ```typescript
 {
-    subscribed: bool, // `true` if user is currently subscribed to the community, and `false` otherwise.
-    startedAt?: string, // DateTime of the subscription period start.
-    expiresAt?: string, // DateTime of the subscription period end.
+    subscribed: boolean; // `true` if user is currently subscribed to the community, and `false` otherwise.
+    startedAt?: string; // DateTime of the subscription period start.
+    expiresAt?: string; // DateTime of the subscription period end.
 }
 ```
 
@@ -126,10 +126,10 @@ const subscriptionRequest = {
 
 ```typescript
 {
-    user: string, // Address of the user's main wallet.
-    communityName: string, // Name of the community to be checked.
-    subscriptionWallet: string, // Address of the subscription wallet.
-    txs: SubscriptionTx[], // List of the pre-signed txs to pay for subscription.
+    user: string; // Address of the user's main wallet.
+    communityName: string; // Name of the community to be checked.
+    subscriptionWallet: string; // Address of the subscription wallet.
+    txs: SubscriptionTx[]; // List of the pre-signed txs to pay for subscription.
 }
 ```
 
@@ -137,9 +137,9 @@ Subscription Tx is defined as follows:
 
 ```typescript
 {
-    transferToSub: TransferFrom,
-    burnTx: Transfer,
-    burnTxEthSignature: string,
+    transferToSub: TransferFrom;
+    burnTx: Transfer;
+    burnTxEthSignature: Signature;
 }
 ```
 
@@ -159,8 +159,8 @@ Returns the type and amount of community tokens that user can mint.
 
 ```typescript
 {
-    user: string, // Address of the user's main wallet.
-    communityName: string, // Name of the community to be checked.
+    user: string; // Address of the user's main wallet.
+    communityName: string; // Name of the community to be checked.
 }
 ```
 
@@ -168,8 +168,8 @@ Returns the type and amount of community tokens that user can mint.
 
 ```typescript
 {
-    token: string, // Name of the community token
-    amount: number // Amount of tokens user can mint
+    token: string; // Name of the community token
+    amount: number; // Amount of tokens user can mint
 }
 ```
 
@@ -218,9 +218,9 @@ const transaction = new Transaction(
 
 ```typescript
 {
-    user: string, // Address of the user's main wallet.
-    communityName: string, // Name of the community to be checked.
-    mintingTx: TransferFrom, // Created, but not signed minting transaction.
+    user: string; // Address of the user's main wallet.
+    communityName: string; // Name of the community to be checked.
+    mintingTx: TransferFrom; // Created, but not signed minting transaction.
 }
 ```
 
@@ -228,7 +228,7 @@ const transaction = new Transaction(
 
 ```typescript
 {
-    signature: { zksyncSignature: Signature } // Signature for a minting transaction in a hexadecimal form.
+    signature: { zksyncSignature: Signature }; // Signature for a minting transaction in a hexadecimal form.
 }
 ```
 

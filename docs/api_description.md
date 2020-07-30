@@ -200,7 +200,7 @@ let mintingTx = await wallet.createTransferFromNoSend({
 mintingTx.fromSignature = ...; // Now that we have a `TransferFrom` object, we can request minting signature from the Service Provider.
 
 // Submit signed minting tx.
-const submitResponse = await wallet.provider.submitTx(signedWithdrawTransaction);
+const submitResponse = await wallet.provider.submitTx(mintingTx);
 
 // If required, we can create a "Transaction" object.
 const transaction = new Transaction(

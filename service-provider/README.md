@@ -6,4 +6,4 @@ It provides a public API for users to grant tokens, create and prolong subscript
 
 ## Components
 
-- [API description](docs/api_description.md)
+- [API description](../docs/api_description.md)

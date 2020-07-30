@@ -1,6 +1,7 @@
 import {
     Provider as ZksyncProver, Wallet, types as zksyncTypes,
 } from "zksync";
+import * as zksync from "zksync";
 import {ethers} from "ethers";
 import {parseEther} from "ethers/utils";
 import * as types from "../src/types";
@@ -139,7 +140,7 @@ async function mintTokens(userWallet: Wallet, communityName: string, token: stri
     const submitResponse = await userWallet.provider.submitTx(mintingTx);
 
     // If required, we can create a "Transaction" object.
-    const transaction = new zksyncTypes.Transaction(
+    const transaction = new zksync.Transaction(
         mintingTx,
         submitResponse,
         userWallet.provider

@@ -1,5 +1,5 @@
 import Axios from "axios";
-import { SubscriptionCheckResponse, GrantedTokensResponse, SubscriptionTx } from "./types";
+import { SubscriptionCheckResponse, GrantedTokensResponse } from "./types";
 import * as zksync from "zksync";
 
 export class ApiError extends Error {
@@ -75,7 +75,7 @@ export class Provider {
         return response.signature.zksyncSignature;
     }
 
-    async subscribe(user: string, communityName: string, subscriptionWallet: zksync.types.Address, txs: SubscriptionTx[]) {
+    async subscribe(user: string, communityName: string, subscriptionWallet: zksync.types.Address, txs: zksync.types.SubscriptionTx[]) {
         let endpoint = this.transport.endpoint("/subscribe");
         await this.transport.request(endpoint, {
             user,

@@ -26,9 +26,3 @@ export interface MintedSignatureResponse {
     // Signature for a minting transaction.
     signature: { zksyncSignature: zksync.types.Signature }
 }
-
-export interface SubscriptionTx {
-    transferToSub: zksync.types.TransferFrom,
-    burnTx: zksync.types.Transfer,
-    burnTxEthSignature: zksync.types.TxEthSignature,
-}

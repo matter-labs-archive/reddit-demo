@@ -12,7 +12,7 @@ use std::{collections::HashMap, sync::Arc};
 pub const DEFAULT_TOKENS_AMOUNT: u64 = 10_000;
 
 const TEST_COMMUNITY_NAME: &str = "TestCommunity";
-const TEST_COMMUNITY_TOKEN: &str = "ETH";
+const TEST_COMMUNITY_TOKEN: &str = "MLTT";
 
 #[derive(Debug, Clone)]
 pub struct CommunityInfo {

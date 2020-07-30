@@ -1,5 +1,5 @@
 import {
-    Provider as ZksyncProver, Wallet,
+    Provider as ZksyncProver, Wallet, types as zksyncTypes,
 } from "zksync";
 import {ethers} from "ethers";
 import {parseEther} from "ethers/utils";
@@ -20,9 +20,6 @@ if (network == "localhost") {
 }
 
 let syncProvider: ZksyncProver;
-
-async function request(url: string): Promise<any> {
-}
 
 async function depositFunds(syncProvider: ZksyncProver): Promise<Wallet> {
     const depositEthWallet = ethers.Wallet.fromMnemonic(
@@ -109,6 +106,69 @@ async function getGrantedTokensAmount(userWallet: Wallet): Promise<types.Granted
     return response;
 }
 
+async function mintTokens(userWallet: Wallet, communityName: string, token: string, amount: number) {
+    const serviceProvider = new ServiceProvider(SERVICE_PROVIDER_URL);
+
+    const genesisAddress = await serviceProvider.genesisWalletAddress();
+    const transferFromFee = 0; // TODO
+    const walletNonce = await userWallet.getNonce();
+
+    const validFrom = 0; // TODO
+    const validUntil = 0; // TODO
+
+    // As the "from" signature is currently unknown, initialize it as an empty signature.
+    let fromSignature = {
+        "pubKey":"0000000000000000000000000000000000000000000000000000000000000000",
+        "signature":"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }; 
+    let mintingTx = await userWallet.createTransferFromNoSend({
+        from: genesisAddress,
+        token,
+        amount,
+        fee: transferFromFee,
+        nonce: walletNonce,
+        validFrom, // Should be equal to the current time, so it may be executed right after signing.
+        validUntil, // Better to set as "validFrom + 1 day"
+        fromSignature,
+    });
+
+    // Now that we have a `TransferFrom` object, we can request minting signature from the Service Provider.
+    mintingTx.fromSignature = await serviceProvider.getMintingSignature(userWallet.address(), communityName, mintingTx);
+
+    // Submit signed minting tx.
+    const submitResponse = await userWallet.provider.submitTx(mintingTx);
+
+    // If required, we can create a "Transaction" object.
+    const transaction = new zksyncTypes.Transaction(
+        mintingTx,
+        submitResponse,
+        userWallet.provider
+    );
+
+    await transaction.awaitReceipt();
+}
+
+async function createSubscriptionWallet(userWallet: Wallet, communityName: string): Promise<Wallet> {
+    const postfix = "reddit.com/r/" + communityName;
+    const subscriptionWallet = await userWallet.createDerivedWallet(postfix);
+
+    // Initialize the wallet via `ChangePubKey` operation.
+    if (!await subscriptionWallet.isSigningKeySet()) {
+        await subscriptionWallet.setSigningKey();
+    }
+
+    return subscriptionWallet;
+}
+
+async function subscribe(userWallet: Wallet, subscriptionWallet: Wallet, communityName: string) {
+    const serviceProvider = new ServiceProvider(SERVICE_PROVIDER_URL);
+
+    // const months = 12;
+    // const subscriptionTxs = await userWallet.createSubscriptionTransactions(subscriptionWallet, months);
+
+    // await serviceProvider.subscribe(userWallet.address(), communityName, subscriptionWallet.address(), subscriptionTxs);
+}
+
 (async () => {
     try {
         console.log("Starting the test");
@@ -127,7 +187,21 @@ async function getGrantedTokensAmount(userWallet: Wallet): Promise<types.Granted
         console.log("Retrieving the granted tokens amount");
         const grantedTokens = await getGrantedTokensAmount(userWallet);
 
+        // Mint granted tokens.
+        console.log("Minting community tokens");
+        await mintTokens(userWallet, COMMUNITY_NAME, grantedTokens.token, grantedTokens.amount);
 
+        // Create a subscription wallet.
+        console.log("Creating a subscription wallet");
+        const subscriptionWallet = await createSubscriptionWallet(userWallet, COMMUNITY_NAME);
+
+        // Subscribe to the community.
+        console.log("Subscribing user");
+        await subscribe(userWallet, subscriptionWallet, COMMUNITY_NAME);
+
+        // User now should be subscribed.
+        console.log("Checking subscription status (subscribed)");
+        await checkSubscribed(userWallet, true);
 
         console.log("Test completed");
         process.exit(0);

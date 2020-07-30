@@ -5,6 +5,10 @@ This project contains the demo application for Reddit.
 Main features of it is to provide community tokens for users, register new communities
 and manage subscriptions to these communities.
 
+## Solution overflow
+
+An architectural overview of the solution and all the involved parties can be found at the [workflow spec] docs section.
+
 ## Components
 
 This repository contains two related but yet independent projects:

@@ -99,6 +99,12 @@ If everything is OK, the following response will be returned:
 Alternatively, config for the application can be loaded from the environment variables.
 To do so, simply add the `--env_config` flag when running the application.
 
+## TypeScript client library
+
+This application has a very basic (currently) client library implemented in TypeScript.
+
+You can find it description in the [js folder](./js) of this repository.
+
 # License
 
 Reddit-demo project is distributed under the terms of both the MIT license

@@ -114,8 +114,13 @@ metadata:
   name: configmap
   namespace: reddit-demo
 data:
+  GENESIS_ACCOUNT_ID: 0 # Secret, has to be set before kube update
+  GENESIS_ACCOUNT_ADDRESS: '0x0000000000000000000000000000000000000000' # Secret, has to be set before kube update
+  GENESIS_ACCOUNT_PRIVATE_KEY: '0000000000000000000000000000000000000000000000000000000000000000' # Secret, has to be set before kube update
+  GENESIS_ACCOUNT_ETH_PRIVATE_KEY: '0x0000000000000000000000000000000000000000000000000000000000000000' # Secret, has to be set before kube update
   APP_BIND_ADDRESS: '0.0.0.0:8080'
   ZKSYNC_REST_API_ADDRESS: 'https://stage-api.zksync.dev'
   ZKSYNC_JSON_RPC_ADDRESS: 'https://stage-api.zksync.dev/jsrpc'
   COMMUNITY_ORACLE_ADDRESS: 'http://community-oracle:4040'
+  BURN_ACCOUNT_ADDRESS: '0x0000000000000000000000000000000000000001'
   RUST_LOG: 'info'

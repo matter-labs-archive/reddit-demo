@@ -5,7 +5,7 @@ A work-in-progress typescript client library for the Reddit service provider.
 Basic usage:
 
 ```typescript
-const serviceProvider = new ServiceProvider(SERVICE_PROVIDER_URL);
+const serviceProvider = new Provider(SERVICE_PROVIDER_URL);
 
 const response = await serviceProvider.isUserSubscribed(userWallet.address(), COMMUNITY_NAME);
 

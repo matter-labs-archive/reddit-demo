@@ -3,7 +3,7 @@ import { SubscriptionCheckResponse, GrantedTokensResponse, SubscriptionTx } from
 import * as zksync from "zksync";
 
 export class ApiError extends Error {
-    constructor(message: string, public jrpcError: ApiErrorObject) {
+    constructor(message: string, public apiError: ApiErrorObject) {
         super(message);
     }
 }
@@ -22,16 +22,16 @@ export class HTTPTransport {
 
     // JSON RPC request
     async request(endpoint: string, request = null): Promise<any> {
-        const response = await Axios.post(this.address, request).then(resp => {
-            return resp.data;
+        const response = await Axios.post(endpoint, request).then(resp => {
+            return resp;
         });
 
-        if (response.result) {
-            return response.result;
-        } else if (response.error) {
-            throw new ApiError("API response error", response.error);
+        if (response.status == 200) {
+            return response.data;
+        } else if (response.data.error) {
+            throw new ApiError("API response error", response.data.error);
         } else {
-            throw new Error("Unknown API Error");
+            throw new Error(`Unknown API Error: ${JSON.stringify(response)}`);
         }
     }
 }

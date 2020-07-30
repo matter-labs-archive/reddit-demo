@@ -14,4 +14,4 @@ The behavior can be roughly described as follows:
 
 - There is a finite pre-defined set of communities.
 - Every user is considered related to every existing community.
-- Every user is granted 100 community tokens per month.
+- Every user is granted 10000 community tokens per month.

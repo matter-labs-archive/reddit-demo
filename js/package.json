@@ -13,7 +13,7 @@
     "openzeppelin-solidity": "^2.4.0",
     "ts-node": "^8.5.4",
     "typescript": "^3.7.4",
-    "zksync": "link:../zksync-dev/js/zksync.js"
+    "zksync": "link:../zksync/js/zksync.js"
   },
   "scripts": {
     "build": "tsc",

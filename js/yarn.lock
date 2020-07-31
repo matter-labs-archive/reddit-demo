@@ -499,6 +499,6 @@ zksync-crypto@^0.2.1:
   resolved "https://registry.yarnpkg.com/zksync-crypto/-/zksync-crypto-0.2.1.tgz#052bc58504a5233ee076a44946c494d283908ba8"
   integrity sha512-U29Oa78w4+Qu+KwJAYwukmn9A7WZP6F+/QICFf+QSByhaIJJ12Oo5fnzTVrxEv6aptcZ3/KBWkbZIM4ZiR6avQ==
 
-"zksync@link:../zksync-dev/js/zksync.js":
+"zksync@link:../zksync/js/zksync.js":
   version "0.0.0"
   uid ""

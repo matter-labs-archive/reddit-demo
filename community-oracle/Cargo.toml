@@ -16,5 +16,5 @@ env_logger = "0.7"
 structopt = "0.3"
 hex = "0.4"
 
-zksync_testkit = { package = "testkit", path = "../zksync-dev/core/testkit", version = "0.1.0" }
-zksync_models = { package = "models", path = "../zksync-dev/core/models", version = "0.0.1" }
+zksync_testkit = { package = "testkit", path = "../zksync/core/testkit", version = "0.1.0" }
+zksync_models = { package = "models", path = "../zksync/core/models", version = "0.0.1" }

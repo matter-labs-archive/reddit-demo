@@ -11,7 +11,7 @@ An architectural overview of the solution and all the involved parties can be fo
 
 ## Components
 
-This repository contains two related but yet independent projects:
+This repository contains the following related but yet independent projects:
 
 - [Community Oracle](community-oracle) - a bridge between zkSync network and the Reddit platform.
 - [Service Provider](service-provider) - an application capable of initiating and storing the users' subscriptions.

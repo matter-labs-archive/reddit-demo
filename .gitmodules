@@ -1,3 +1,0 @@
-[submodule "zksync-dev"]
-	path = zksync-dev
-	url = git@github.com:matter-labs/zksync-dev.git
